@@ -1,0 +1,35 @@
+PROBLEMES IDENTIFIES:
+DETUNE ? 
+Level scaling curves right/left -> à retravailler
+
+paramètres mal assignés:
+detune, coarse (x2 ?), rate scaling
+OSC Mode
+LFO waveform
+LFO PMS
+CORE DUMPED preset take off
+
+A faire: 
+Pitch envelope
+Tune
+OP ON/OFF
+
+Traitement par 64 samples !!
+Pitch bend, range
+Modulation wheel, range, assign
+Portamento 
+
+gestion du gain: 
+1OP vel=100 (standard) => -18dB OK
+implémenter scaling de volume par nombre de carriers ? Ca ne semble pas être le cas sur Dexed
+
+Paramètres nécessitant une update:
+Feedback
+Algo
+paramètres frequency (detune, coarse, fine) mais recalculé au trigger au pire
+OSC Key Sync -> besoin d'une méthode pour modifier les 6op
+
+IDEES:
+Autres waveforms pour les oscillateurs
+Effets (reverb, chorus, ...)
+drive -> float output = tanh(mix * drive);
