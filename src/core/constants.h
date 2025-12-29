@@ -2,16 +2,19 @@
 #define CONSTANTS_H
 
 #include <cstddef>
+#include <cstdint>
 
-// Audio constants
+// Audio
 constexpr float SAMPLE_RATE = 44100.0f;
 constexpr float INV_SAMPLE_RATE = 1.0f / SAMPLE_RATE;
 constexpr float PI = 3.14159265f;
 
-// Synth constants
+// Synth
 constexpr uint8_t POLYPHONY = 16;
+constexpr size_t NUM_OPERATORS = 6;
+constexpr float MODULATION_SCALING = 12.5f;
 
-// LUT constants
+// LUT
 constexpr size_t OSC_LUT_SIZE = 4096;
 constexpr float OSC_LUT_SIZE_F = static_cast<float>(OSC_LUT_SIZE);
 constexpr float INV_OSC_LUT_SIZE = 1.0f / OSC_LUT_SIZE_F;
@@ -24,30 +27,17 @@ constexpr float EXP2_LUT_MAX = 10.0f;
 constexpr float EXP2_LUT_RANGE = EXP2_LUT_MAX - EXP2_LUT_MIN;
 constexpr float EXP2_LUT_RANGE_INV = 1.0f / EXP2_LUT_RANGE;
 
-// FM synthesis constants
-constexpr size_t NUM_OPERATORS = 6;
-constexpr float MODULATION_SCALING = 12.5f;
-
-// Feedback constants
+// Feedback
 constexpr uint8_t MAX_FEEDBACK_VALUE = 7;
-// Dexed: fb_shift = 8 - feedback, scaled_fb = (y0 + y) >> (fb_shift + 1)
-// Exponential scaling: each step doubles feedback intensity
 constexpr float FEEDBACK_TABLE[8] = {
-    0.0f,       // 0: off
-    0.015625f,  // 1: fb_shift=7, div by 256, normalized to feedback=7
-    0.03125f,   // 2: fb_shift=6, div by 128
-    0.0625f,    // 3: fb_shift=5, div by 64
-    0.125f,     // 4: fb_shift=4, div by 32
-    0.25f,      // 5: fb_shift=3, div by 16
-    0.5f,       // 6: fb_shift=2, div by 8
-    1.0f        // 7: fb_shift=1, div by 4 (reference)
+    0.0f, 0.015625f, 0.03125f, 0.0625f, 0.125f, 0.25f, 0.5f, 1.0f
 };
 constexpr float FEEDBACK_SCALING = 6.5f;
 
-// Operator constants
-constexpr float OPERATOR_SCALING = 0.125f;  // Normalize OP volume to -18dBFS
-// Keyboard Level Scaling curves
-// Linear curves (0, 3) and Exponential curves (1, 2)
+// Operator
+constexpr float OPERATOR_SCALING = 0.125f;
+
+// Keyboard level scaling curves
 constexpr uint8_t KEYSCALE_LINEAR[100] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
     20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
@@ -56,24 +46,20 @@ constexpr uint8_t KEYSCALE_LINEAR[100] = {
     80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99
 };
 
-// Exponential scale data (from Dexed dx7note.cc)
-// Used for curves 1 and 2 (exponential)
 constexpr uint8_t KEYSCALE_EXP[33] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 16, 19, 23, 27, 33, 39, 47, 56, 66,
     80, 94, 110, 126, 142, 158, 174, 190, 206, 222, 238, 250
 };
 
-// Frequency ratio constants
-constexpr float DETUNE_SCALING = 0.07f; // ±7% maximum detune
+// Frequency
+constexpr float DETUNE_SCALING = 0.07f;
 constexpr uint8_t MAX_VELOCITY_SENSITIVITY = 7;
 constexpr uint8_t MAX_DETUNE = 14;
 constexpr uint8_t MAX_COARSE = 31;
 constexpr uint8_t MAX_FINE = 99;
 
-// Fixed frequency base values (Hz)
 constexpr float FIXED_FREQ_BASE[4] = {1.0f, 10.0f, 100.0f, 1000.0f};
 
-// Fixed frequency fine adjustment values (DX7 exact, did not find the formula, fuck it)
 constexpr float FIXED_FREQ_FINE_VALUES[100] = {
     1.0f,       1.02329f,   1.04713f,   1.07152f,   1.09648f,   1.12202f,   1.14815f,   1.17490f,   1.20226f,   1.23027f,
     1.25893f,   1.28825f,   1.31826f,   1.34896f,   1.38038f,   1.41254f,   1.44544f,   1.47911f,   1.51356f,   1.54882f,
@@ -87,33 +73,32 @@ constexpr float FIXED_FREQ_FINE_VALUES[100] = {
     7.94328f,   8.12830f,   8.31764f,   8.51138f,   8.70964f,   8.91251f,   9.12011f,   9.33253f,   9.54993f,   9.77237f
 };
 
-// Non linear detune table (DX7 style)
+// DX7 detune table (non-linear)
 constexpr float DETUNE_TABLE[15] = {
     0.0f, 0.078f, 0.156f, 0.234f, 0.312f, 0.468f, 0.624f, 0.780f, 
     0.936f, 1.092f, 1.248f, 1.404f, 1.560f, 1.872f, 2.184f
 };
 
-// Envelope constants
+// Envelope
 constexpr uint32_t Q24_ONE = 1 << 24;
 constexpr float INV_Q24_ONE = 1.0f / static_cast<float>(Q24_ONE);
-constexpr int LG_N = 6;         // log2(64) for 64 samples buffer processing (from Dexed)
-constexpr int N = (1 << LG_N);  // 64 samples buffer size
+constexpr int LG_N = 6;
+constexpr int N = (1 << LG_N);
 
-// Velocity constants
-constexpr float VELOCITY_FACTOR_TABLE[8][9] = {     // From measurements of Dexed in Ableton using one OP
-    {0.543250331f,  0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f    },  // Sensitivity 0
-    {0.595662144f,  0.568852931f,   0.543250331f,   0.501187234f,   0.45708819f,    0.421696503f,   0.3672823f,     0.309029543f,   0.154881662f    },  // Sensitivity 1
-    {0.647888095f,  0.595662144f,   0.518800039f,   0.45708819f,    0.384591782f,   0.323593657f,   0.251188643f,   0.177827941f,   0.042657952f    },  // Sensitivity 2
-    {0.691830971f,  0.623734835f,   0.518800039f,   0.421696503f,   0.323593657f,   0.251188643f,   0.169824365f,   0.096605088f,   0.011885022f    },  // Sensitivity 3
-    {0.770016444f,  0.651628394f,   0.501187234f,   0.384591782f,   0.27542287f,    0.1840772f,     0.114815362f,   0.054954087f,   0.003427678f    },  // Sensitivity 4
-    {0.839459987f,  0.677641508f,   0.501187234f,   0.354813389f,   0.229086765f,   0.142889396f,   0.077624712f,   0.031622777f,   0.001188502f    },  // Sensitivity 5
-    {0.920449572f,  0.706317554f,   0.478630092f,   0.323593657f,   0.192752491f,   0.10964782f,    0.053088444f,   0.017378008f,   0.000524807f    },  // Sensitivity 6
-    {1.0f,          0.73790423f,    0.478630092f,   0.298538262f,   0.16218101f,    0.086099375f,   0.035892193f,   0.01f,          0.000398107f    }   // Sensitivity 7
+// Velocity sensitivity
+constexpr float VELOCITY_FACTOR_TABLE[8][9] = {
+    {0.543250331f,  0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f,   0.543250331f    },
+    {0.595662144f,  0.568852931f,   0.543250331f,   0.501187234f,   0.45708819f,    0.421696503f,   0.3672823f,     0.309029543f,   0.154881662f    },
+    {0.647888095f,  0.595662144f,   0.518800039f,   0.45708819f,    0.384591782f,   0.323593657f,   0.251188643f,   0.177827941f,   0.042657952f    },
+    {0.691830971f,  0.623734835f,   0.518800039f,   0.421696503f,   0.323593657f,   0.251188643f,   0.169824365f,   0.096605088f,   0.011885022f    },
+    {0.770016444f,  0.651628394f,   0.501187234f,   0.384591782f,   0.27542287f,    0.1840772f,     0.114815362f,   0.054954087f,   0.003427678f    },
+    {0.839459987f,  0.677641508f,   0.501187234f,   0.354813389f,   0.229086765f,   0.142889396f,   0.077624712f,   0.031622777f,   0.001188502f    },
+    {0.920449572f,  0.706317554f,   0.478630092f,   0.323593657f,   0.192752491f,   0.10964782f,    0.053088444f,   0.017378008f,   0.000524807f    },
+    {1.0f,          0.73790423f,    0.478630092f,   0.298538262f,   0.16218101f,    0.086099375f,   0.035892193f,   0.01f,          0.000398107f    }
 };
 constexpr int VELOCITY_POINTS[9] = {127, 111, 95, 79, 64, 48, 32, 16, 1};
 
-// LFO constants
-// Exact DX7 LFO frequency table (Hz) - From Dexed source code
+// LFO
 constexpr float LFO_SPEED[100] = {
     0.062541f,  0.125031f,  0.312393f,  0.437120f,  0.624610f,
     0.750694f,  0.936330f,  1.125302f,  1.249609f,  1.436782f,
@@ -137,7 +122,6 @@ constexpr float LFO_SPEED[100] = {
     44.326241f, 44.883303f, 46.772685f, 48.590865f, 49.261084f 
 };
 
-// LFO Delays from approximative measurements of Dexed
 constexpr float LFO_DELAY[100] = {
     0.000f, 0.006f, 0.012f, 0.019f, 0.026f, 0.033f, 0.040f, 0.047f, 0.051f, 0.055f,
     0.062f, 0.069f, 0.076f, 0.082f, 0.089f, 0.092f, 0.094f, 0.095f, 0.096f, 0.096f,
@@ -152,7 +136,7 @@ constexpr float LFO_DELAY[100] = {
 };
 
 constexpr float LFO_PMS[8] = {
-    0.0f, 0.051f, 0.092f, 0.135f, 0.21f, 0.355f, 0.615f, 1.000f     // Tuned at PMD=99 and note=69, TODO: verify across the keyboard and PMD values
+    0.0f, 0.051f, 0.092f, 0.135f, 0.21f, 0.355f, 0.615f, 1.000f
 };
 
 constexpr float INV_PARAM_99 = 1.0f / 99.0f;

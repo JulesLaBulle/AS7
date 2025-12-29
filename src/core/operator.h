@@ -33,7 +33,8 @@ private:
     // LFO reference for modulation
     LFO* lfo = nullptr;
 
-    inline float midiToFrequency(uint8_t midiNote, float tuning = 440.0f) {         // TODO: replace with LUT for speed ? full frequency table needed
+    inline float midiToFrequency(uint8_t midiNote, float tuning = 440.0f) {
+        // Convert MIDI note to frequency using A440 tuning
         return (tuning / 32.0f) * exp2f((static_cast<float>(midiNote) - 9.0f) / 12.0f);
     }
     

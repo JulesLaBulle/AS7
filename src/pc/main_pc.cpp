@@ -16,7 +16,7 @@
 // Test parameters
 constexpr char FILE_NAME[] = "fm_synth.wav";
 constexpr char BANK_FILE_PATH[] = "./presets/rom1a.syx";
-constexpr uint8_t PRESET_NUMBER = 7; // 0-31
+constexpr uint8_t PRESET_NUMBER = 15; // 0-31
 
 constexpr float NOTE_DURATION = 8.0f;   
 constexpr float TOTAL_DURATION = 10.0f;
@@ -25,6 +25,11 @@ constexpr size_t TOTAL_SAMPLES = static_cast<size_t>(SAMPLE_RATE * TOTAL_DURATIO
 int main() {
     // Initialize Look Up Tables
     LUT::init();
+
+    // -------------------------------------------------------------------------
+    // Create and configure the voice
+    // -------------------------------------------------------------------------
+    Synth synth = Synth();
     
     /*
     OperatorConfig opConfigs[6] = {
@@ -93,13 +98,9 @@ int main() {
         ),
         false               // Monophonic
     );
+
+    synth.configure(&synthConfig);
     */
-    
-    // -------------------------------------------------------------------------
-    // Create and configure the voice
-    // -------------------------------------------------------------------------
-    Synth synth = Synth();
-    // synth.configure(&synthConfig);
     
     SynthConfig presetConfig;
 
@@ -108,10 +109,6 @@ int main() {
         std::cout << "DEBUG: Bank loaded, now loading preset..." << std::endl;
         
         if (sysex.loadPreset(&presetConfig, PRESET_NUMBER)) {
-            // presetConfig.voiceConfig.algorithm = Algorithms::ALL_ALGORITHMS[4]; // TESTING: Override algorithm for testing
-
-            // presetConfig.voiceConfig.operatorConfigs[0].envelope.r1 = 99;
-
             synth.configure(&presetConfig);
             std::cout << "Loaded preset: " << sysex.getPresetName(PRESET_NUMBER) << std::endl;
         }
@@ -127,15 +124,15 @@ int main() {
     samples.reserve(TOTAL_SAMPLES);
     
     // Play notes
-    synth.noteOn(69, 80);
+    synth.noteOn(69, 100);
     
     for (size_t i = 0; i < TOTAL_SAMPLES; ++i) {
         if (i == static_cast<size_t>(SAMPLE_RATE * 1.0f)) {
-            synth.noteOn(72, 80);
+            synth.noteOn(72, 100);
         }
 
         if (i == static_cast<size_t>(SAMPLE_RATE * 2.0f)) {
-            synth.noteOn(76, 80);
+            synth.noteOn(76, 100);
         }
 
         // Release note after NOTE_DURATION seconds

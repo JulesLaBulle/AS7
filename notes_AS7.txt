@@ -1,12 +1,18 @@
 PROBLEMES IDENTIFIES:
-DETUNE ? 
-Constantes multiplicatrices du paramètre feedback
+Constantes multiplicatrices du paramètre feedback ? Globalement feedback imprécis
+Detune ?
 
+Presets défectueux:
+7 trop d'harmoniques (fonctionne avec mod_scal=3.0 et fdb_scal=2.5)
+9 attaque trop forte (c ok en vrai)
+11 trop d'harmoniques (fonctionne avec mod_scal=3.0 et fdb_scal=4.5)
+12 très lent
+13 trop d'harmoniques (fonctionne avec mod_scal=3.0 et fdb_scal=2.5)
+...
 
 A faire: 
 Pitch envelope
 Tune
-OP ON/OFF
 
 Traitement par 64 samples !!
 Pitch bend, range
