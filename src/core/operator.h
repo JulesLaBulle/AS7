@@ -23,7 +23,7 @@ private:
     // Velocity factor, calculated from velocity sensitivity and current velocity using LUT
     float velocityFactor = 1.0f;
 
-    // Keyboard level scaling
+    // Keyboard level scaling factor (converted from log domain)
     float levelScalingFactor = 1.0f;
     
     // Feedback state
@@ -126,22 +126,62 @@ private:
         return factorUpper + t * (factorLower - factorUpper);
     }
 
-    // KEYBOARD LEVEL SCALING
-    float ScaleLevel(uint8_t midiNote, uint8_t breakpoint, uint8_t leftDepth, uint8_t rightDepth,
+    // KEYBOARD LEVEL SCALING (from Dexed dx7note.cc)
+    // Calculates level scaling factor based on MIDI note, breakpoint, depth, and curve
+    // Returns a linear scaling factor (not exponential like original Dexed)
+    // Called once per note trigger, so exp2f is acceptable
+    // Dexed: outlevel = scaleoutlevel(outputLevel) + level_scaling, clamped to 127
+    // scaleoutlevel(x) = x >= 20 ? 28 + x : lut[x]
+    // For outputLevel 78: scaleoutlevel(78) = 106
+    float scaleLevel(uint8_t midiNote, uint8_t outputLevel, uint8_t breakpoint, uint8_t leftDepth, uint8_t rightDepth,
                      uint8_t leftCurve, uint8_t rightCurve) {
-        int offset = midiNote - breakpoint;
+        if (!leftDepth && !rightDepth) {
+            return 1.0f;
+        }
 
-        if (!offset || (!leftDepth && !rightDepth)) { return 1.0f; }
-
-        const uint8_t depth  = offset < 0 ? leftDepth  : rightDepth;
-        const uint8_t curve  = offset < 0 ? leftCurve  : rightCurve;
-
-        const uint8_t tableVal = KEYSCALE_CURVES[curve][std::min(99, std::abs(offset))];
-
-        const float attenuation = (tableVal * (depth / 99.0f));
+        int offset = static_cast<int>(midiNote) - static_cast<int>(breakpoint) - 17;
         
-        // TODO LUT and optimize ? maybe unnecessary, called only once per note played
-        return exp2f(- attenuation * 0.75f / 6.0f);     
+        int group, depth;
+        uint8_t curve;
+        
+        if (offset >= 0) {
+            // RIGHT side (more acute/higher notes)
+            group = (offset + 1) / 3;  // Group by 3 semitones
+            depth = rightDepth;
+            curve = rightCurve;
+        } else {
+            // LEFT side (more grave/lower notes)
+            group = -(offset - 1) / 3;  // Group by 3 semitones
+            depth = leftDepth;
+            curve = leftCurve;
+        }
+        
+        // Limit group to available table size
+        group = std::min(group, 99);
+        
+        // Calculate attenuation value based on curve type (matches Dexed ScaleCurve)
+        int scale;
+        if (curve == 0 || curve == 3) {
+            // Linear curves
+            scale = (group * depth * 329) >> 12;  // 329/4096 ≈ 0.080
+        } else {
+            // Exponential curves (1, 2)
+            int raw_exp = KEYSCALE_EXP[std::min(group, 32)];
+            scale = (raw_exp * depth * 329) >> 15;  // 329/32768 ≈ 0.010
+        }
+        
+        if (curve < 2) {
+            scale = -scale;
+        }
+        
+        // Dexed: outlevel = scaleoutlevel(outputLevel), outlevel += scale, outlevel = min(127, outlevel)
+        int scaledOutlevel = (outputLevel >= 20) ? (28 + outputLevel) : outputLevel;
+        int clampedWithScale = std::min(127, scaledOutlevel + scale);
+        int clampedNoScale = scaledOutlevel;
+        
+        // Factor = exp2((clamped_with_scale - clamped_no_scale) << 5 * INV_Q24)
+        int effectiveScale = clampedWithScale - clampedNoScale;
+        return LUT::exp2(static_cast<float>(effectiveScale << 5) * INV_Q24_ONE);
     }
     
 public:
@@ -161,12 +201,12 @@ public:
         updateFrequency();
     }
     
-    // Set feedback level (0-7, DX7 style)
+    // Dexed: fb_shift = 8 - feedback, scaled_fb = (y0 + y) >> (fb_shift + 1)
     void setFeedback(uint8_t feedbackValue) {
         if (feedbackValue > MAX_FEEDBACK_VALUE) {
             feedbackValue = MAX_FEEDBACK_VALUE;
         }
-        feedbackLevel = (static_cast<float>(feedbackValue) / MAX_FEEDBACK_VALUE);
+        feedbackLevel = FEEDBACK_TABLE[feedbackValue];
     }
 
     void setLFO(LFO* lfoPtr) {
@@ -186,7 +226,8 @@ public:
 
         velocityFactor = computeVelocityFactor(velocity, config->velocitySensitivity);
 
-        levelScalingFactor = ScaleLevel(midiNote, config->lvlSclBreakpoint, config->lvlSclLeftDepth, config->lvlSclRightDepth,
+        levelScalingFactor = scaleLevel(midiNote, config->envelope.outputLevel, config->lvlSclBreakpoint, 
+                                        config->lvlSclLeftDepth, config->lvlSclRightDepth,
                                         config->lvlSclLeftCurve, config->lvlSclRightCurve);
 
         
@@ -220,12 +261,12 @@ public:
     // -------------------------------------------------------------------------
     
     // Process as carrier or modulator
+    // phaseMod is accumulated phase modulation (can be any value, will be wrapped by oscillator)
     inline float process(float phaseMod = 0.0f) {
         if (!config) return 0.0f;
         if (!config->on) return 0.0f;
         
         const float envelopeLevel = env.process();
-        std::cout << " envelope level: " << envelopeLevel << std::endl;
 
         float oscillatorValue;
         
@@ -237,31 +278,45 @@ public:
 
         float ampModFactor = lfo->getAmpMod() * config->ampModSens * INV_PARAM_3; // LFO amplitude modulation
         
+        // Apply envelope, velocity scaling, and keyboard level scaling (in linear domain)
+        // Level scaling factor is exp2(scale << 5 * INV_Q24), which when multiplied gives
+        // the same result as Dexed's: exp2((outlevel + scale) << 5 * INV_Q24)
         return oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor * (1.0f - ampModFactor) * OPERATOR_SCALING;
     }
     
     // Process with feedback (for feedback operator)
+    // Feedback uses previous output to modulate phase
+    // Based on Dexed/DX7: feedback is SEEDED with previous sample's GAIN-ADJUSTED output
     inline float processWithFeedback() {
         if (!config) return 0.0f;
         if (!config->on) return 0.0f;
         
         const float envelopeLevel = env.process();
-        std::cout << " envelope level: " << envelopeLevel << std::endl;
 
         float oscillatorValue;
         
         // Calculate phase modulation from feedback
+        // CRITICAL: previousOutput contains the PREVIOUS sample's output WITH gain/envelope applied
+        // This creates the dynamic feedback effect: during attack (high envelope) feedback is stronger,
+        // during decay (low envelope) feedback weakens
+        // (See Dexed fm_op_kernel.cc compute_fb: fb_buf[1] = y, where y = Sin::lookup(...) * gain)
         float phaseMod = 0.0f;
         if (feedbackLevel > 0.0f) {
             phaseMod = feedbackLevel * previousOutput * FEEDBACK_SCALING;
         }
 
         oscillatorValue = osc.process(phaseMod);
-        previousOutput = oscillatorValue;  // Store output
+        
+        // Apply envelope, velocity, and level scaling to get the final output
+        float gainedOutput = oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor;
+        
+        // Store output WITH gain/envelope for next sample's feedback
+        // This is what makes feedback responsive to envelope dynamics
+        previousOutput = gainedOutput * OPERATOR_SCALING;
 
         float ampModFactor = lfo->getAmpMod() * config->ampModSens * INV_PARAM_3; // LFO amplitude modulation
 
-        return oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor * (1.0f - ampModFactor) * OPERATOR_SCALING;
+        return gainedOutput * (1.0f - ampModFactor) * OPERATOR_SCALING;
     }
 };
 

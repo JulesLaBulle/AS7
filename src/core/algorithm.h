@@ -104,13 +104,12 @@ public:
 
             if(!operators[i]) continue;
 
-            std::cout << "OP" << i;
-
             // Calculate modulation for this operator
+            // Accumulate all modulator outputs, each one is in [-0.125, +0.125] due to OPERATOR_SCALING
             float phaseMod = 0.0f;
             for(int j = 0; j < config->modulatorCount[i]; ++j) {
                 uint8_t modIndex = config->modulatorIndices[i][j];
-                phaseMod += modulationBuffer[modIndex];
+                phaseMod += modulationBuffer[modIndex] * MODULATION_SCALING;
             }
 
             float output = 0.0f;
@@ -121,10 +120,12 @@ public:
                 output = operators[i]->processWithFeedback();
             } else {
                 // Regular operator (modulator or carrier)
-                output = operators[i]->process(phaseMod * MODULATION_SCALING);
+                // phaseMod is accumulated modulation, will be wrapped by oscillator
+                output = operators[i]->process(phaseMod);
             }
 
-            // Store output for lower-index operators
+            // Store output for lower-index operators to use as modulation
+            // Output is in range approximately [-0.125, +0.125] due to OPERATOR_SCALING
             modulationBuffer[i] = output;
 
             // Add to final output if carrier
@@ -132,8 +133,6 @@ public:
                 finalOutput += output;
             }
         }
-
-        std::cout << std::endl;
 
         return finalOutput;
     }

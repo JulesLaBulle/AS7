@@ -28,41 +28,39 @@ constexpr float EXP2_LUT_RANGE_INV = 1.0f / EXP2_LUT_RANGE;
 constexpr size_t NUM_OPERATORS = 6;
 constexpr float MODULATION_SCALING = 12.5f;
 
-// Feedback constants (DX7 style: 0-7 range)
+// Feedback constants
 constexpr uint8_t MAX_FEEDBACK_VALUE = 7;
-constexpr float FEEDBACK_SCALING = 0.05f; 
+// Dexed: fb_shift = 8 - feedback, scaled_fb = (y0 + y) >> (fb_shift + 1)
+// Exponential scaling: each step doubles feedback intensity
+constexpr float FEEDBACK_TABLE[8] = {
+    0.0f,       // 0: off
+    0.015625f,  // 1: fb_shift=7, div by 256, normalized to feedback=7
+    0.03125f,   // 2: fb_shift=6, div by 128
+    0.0625f,    // 3: fb_shift=5, div by 64
+    0.125f,     // 4: fb_shift=4, div by 32
+    0.25f,      // 5: fb_shift=3, div by 16
+    0.5f,       // 6: fb_shift=2, div by 8
+    1.0f        // 7: fb_shift=1, div by 4 (reference)
+};
+constexpr float FEEDBACK_SCALING = 6.5f;
 
 // Operator constants
-constexpr float OPERATOR_SCALING = 0.125f;  // Normalize OP volume to -18dbFS
-constexpr uint8_t KEYSCALE_CURVES[4][100] = {   // Magic table for key level scaling (from chatgpt lol) TODO: check behavior but seems ok
-    {   // 0 = -LIN (logarithmic decreasing)
-        0,3,6,9,12,15,18,21,24,27,30,33,36,39,42,45,48,51,54,57,
-        60,63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108,111,114,117,
-        120,123,126,129,132,135,138,141,144,147,150,153,156,159,162,165,168,171,174,177,
-        180,183,186,189,192,195,198,201,204,207,210,213,216,219,222,225,228,231,234,237,
-        240,243,246,249,252,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255
-    },
-    {   // 1 = -EXP (exponential decreasing)
-        0,1,2,3,4,5,6,7,8,9,10,12,14,16,18,20,22,24,26,28,
-        30,33,36,39,42,45,48,51,54,57,60,63,66,69,72,75,78,81,84,87,
-        90,93,96,99,102,105,108,111,114,117,120,123,126,129,132,135,138,141,144,147,
-        150,153,156,159,162,165,168,171,174,177,180,183,186,189,192,195,198,201,204,207,
-        210,213,216,219,222,225,228,231,234,237,240,243,246,249,252,255,255,255,255,255
-    },
-    {   // 2 = +EXP (exponential increasing)
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,
-        7,8,10,12,14,16,18,20,22,24,26,28,30,33,36,39,42,45,48,51,
-        54,57,60,63,66,69,72,75,78,81,84,87,90,93,96,99,102,105,108,111,
-        114,117,120,123,126,129,132,135,138,141,144,147,150,153,156,159,162,165,168,171,
-        174,177,180,183,186,189,192,195,198,201,204,207,210,213,216,219,222,225,228,231
-    },
-    {   // 3 = +LIN (logarithmic increasing)
-        0,0,0,0,0,0,0,0,0,0, 3,6,9,12,15,18,21,24,27,30,
-        33,36,39,42,45,48,51,54,57,60, 63,66,69,72,75,78,81,84,87,90,
-        93,96,99,102,105,108,111,114,117,120, 123,126,129,132,135,138,141,144,147,150,
-        153,156,159,162,165,168,171,174,177,180,183,186,189,192,195,198,201,204,207,210, 
-        213,216,219,222,225,228,231,234,237,240,243,246,249,252,255,255,255,255,255,255
-    }
+constexpr float OPERATOR_SCALING = 0.125f;  // Normalize OP volume to -18dBFS
+// Keyboard Level Scaling curves
+// Linear curves (0, 3) and Exponential curves (1, 2)
+constexpr uint8_t KEYSCALE_LINEAR[100] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+    20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+    40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
+    60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+    80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99
+};
+
+// Exponential scale data (from Dexed dx7note.cc)
+// Used for curves 1 and 2 (exponential)
+constexpr uint8_t KEYSCALE_EXP[33] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 16, 19, 23, 27, 33, 39, 47, 56, 66,
+    80, 94, 110, 126, 142, 158, 174, 190, 206, 222, 238, 250
 };
 
 // Frequency ratio constants

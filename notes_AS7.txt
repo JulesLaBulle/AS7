@@ -1,13 +1,7 @@
 PROBLEMES IDENTIFIES:
 DETUNE ? 
-Level scaling curves right/left -> à retravailler
+Constantes multiplicatrices du paramètre feedback
 
-paramètres mal assignés:
-detune, coarse (x2 ?), rate scaling
-OSC Mode
-LFO waveform
-LFO PMS
-CORE DUMPED preset take off
 
 A faire: 
 Pitch envelope
@@ -18,10 +12,6 @@ Traitement par 64 samples !!
 Pitch bend, range
 Modulation wheel, range, assign
 Portamento 
-
-gestion du gain: 
-1OP vel=100 (standard) => -18dB OK
-implémenter scaling de volume par nombre de carriers ? Ca ne semble pas être le cas sur Dexed
 
 Paramètres nécessitant une update:
 Feedback
