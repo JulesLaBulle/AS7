@@ -14,21 +14,20 @@ private:
     int activeNoteCount = 0;
 
     LFO lfo = LFO();
-    
-    // Pitch envelope
 
     const SynthConfig* config = nullptr;
 
 public:
     Synth() = default;
 
-    // Configure all voices with a VoiceConfig pointer
+    // Configure all voices with a SynthConfig pointer
     void configure(const SynthConfig* synthConfigPtr) {
         config = synthConfigPtr;
 
         lfo.configure(&config->lfoConfig);
         for (auto& voice : voices) {
             voice.configure(&config->voiceConfig);
+            voice.setPitchEnvelopeConfig(&config->pitchEnvelopeConfig);
             voice.setLFO(&lfo);
         }
     }

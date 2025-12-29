@@ -5,7 +5,6 @@
 #include "envelope.h"
 #include "config.h"
 #include "lut.h"
-#include "lfo.h"
 
 class Operator {
 private:
@@ -30,8 +29,8 @@ private:
     float feedbackLevel = 0.0f;      // Calculated from feedback parameter (0.0 - 1.0)
     float previousOutput = 0.0f;     // For feedback (delayed by one sample)
 
-    // LFO reference for modulation
-    LFO* lfo = nullptr;
+    // Amplitude modulation depth (from LFO)
+    float ampModDepth = 0.0f;
 
     inline float midiToFrequency(uint8_t midiNote, float tuning = 440.0f) {
         // Convert MIDI note to frequency using A440 tuning
@@ -210,9 +209,9 @@ public:
         feedbackLevel = FEEDBACK_TABLE[feedbackValue];
     }
 
-    void setLFO(LFO* lfoPtr) {
-        lfo = lfoPtr;
-        osc.setLFO(lfoPtr);
+    // Set amplitude modulation depth from LFO (called each sample by Voice)
+    void setAmpMod(float ampMod) {
+        ampModDepth = ampMod;
     }
 
     
@@ -262,8 +261,9 @@ public:
     // -------------------------------------------------------------------------
     
     // Process as carrier or modulator
-    // phaseMod is accumulated phase modulation (can be any value, will be wrapped by oscillator)
-    inline float process(float phaseMod = 0.0f) {
+    // phaseMod: accumulated phase modulation (can be any value, will be wrapped by oscillator)
+    // pitchMod: frequency multiplier from LFO + pitch envelope (1.0 = no change)
+    inline float process(float phaseMod = 0.0f, float pitchMod = 1.0f) {
         if (!config) return 0.0f;
         if (!config->on) return 0.0f;
         
@@ -272,50 +272,40 @@ public:
         float oscillatorValue;
         
         if (phaseMod != 0.0f) {
-            oscillatorValue = osc.process(phaseMod);
+            oscillatorValue = osc.process(phaseMod, pitchMod);
         } else {
-            oscillatorValue = osc.process();
+            oscillatorValue = osc.process(0.0f, pitchMod);
         }
 
-        float ampModFactor = lfo->getAmpMod() * config->ampModSens * INV_PARAM_3; // LFO amplitude modulation
+        float ampModFactor = ampModDepth * config->ampModSens * INV_PARAM_3;
         
-        // Apply envelope, velocity scaling, and keyboard level scaling (in linear domain)
-        // Level scaling factor is exp2(scale << 5 * INV_Q24), which when multiplied gives
-        // the same result as Dexed's: exp2((outlevel + scale) << 5 * INV_Q24)
+        // Apply envelope, velocity scaling, and keyboard level scaling
         return oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor * (1.0f - ampModFactor) * OPERATOR_SCALING;
     }
     
     // Process with feedback (for feedback operator)
-    // Feedback uses previous output to modulate phase
-    // Based on Dexed/DX7: feedback is SEEDED with previous sample's GAIN-ADJUSTED output
-    inline float processWithFeedback() {
+    // pitchMod: frequency multiplier from LFO + pitch envelope (1.0 = no change)
+    inline float processWithFeedback(float pitchMod = 1.0f) {
         if (!config) return 0.0f;
         if (!config->on) return 0.0f;
         
         const float envelopeLevel = env.process();
 
-        float oscillatorValue;
-        
         // Calculate phase modulation from feedback
-        // CRITICAL: previousOutput contains the PREVIOUS sample's output WITH gain/envelope applied
-        // This creates the dynamic feedback effect: during attack (high envelope) feedback is stronger,
-        // during decay (low envelope) feedback weakens
-        // (See Dexed fm_op_kernel.cc compute_fb: fb_buf[1] = y, where y = Sin::lookup(...) * gain)
         float phaseMod = 0.0f;
         if (feedbackLevel > 0.0f) {
             phaseMod = feedbackLevel * previousOutput * FEEDBACK_SCALING;
         }
 
-        oscillatorValue = osc.process(phaseMod);
+        float oscillatorValue = osc.process(phaseMod, pitchMod);
         
         // Apply envelope, velocity, and level scaling to get the final output
         float gainedOutput = oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor;
         
         // Store output WITH gain/envelope for next sample's feedback
-        // This is what makes feedback responsive to envelope dynamics
         previousOutput = gainedOutput * OPERATOR_SCALING;
 
-        float ampModFactor = lfo->getAmpMod() * config->ampModSens * INV_PARAM_3; // LFO amplitude modulation
+        float ampModFactor = ampModDepth * config->ampModSens * INV_PARAM_3;
 
         return gainedOutput * (1.0f - ampModFactor) * OPERATOR_SCALING;
     }

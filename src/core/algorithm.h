@@ -89,8 +89,10 @@ public:
     // Audio Processing Methods
     // -------------------------------------------------------------------------
     
-    // Process one audio sample (highly optimized for real-time)
-    inline float process() {
+    // Process one audio sample
+    // pitchMod: frequency multiplier from LFO + pitch envelope (1.0 = no change)
+    // ampMod: amplitude modulation depth from LFO (0.0 = no modulation)
+    inline float process(float pitchMod = 1.0f, float ampMod = 0.0f) {
         if(!config) return 0.0f;
 
         float finalOutput = 0.0f;
@@ -104,8 +106,10 @@ public:
 
             if(!operators[i]) continue;
 
+            // Set amplitude modulation for this operator
+            operators[i]->setAmpMod(ampMod);
+
             // Calculate modulation for this operator
-            // Accumulate all modulator outputs, each one is in [-0.125, +0.125] due to OPERATOR_SCALING
             float phaseMod = 0.0f;
             for(int j = 0; j < config->modulatorCount[i]; ++j) {
                 uint8_t modIndex = config->modulatorIndices[i][j];
@@ -116,16 +120,12 @@ public:
 
             // Special handling for feedback operator
             if(config->hasFeedback && i == config->feedbackOperator) {
-                // Feedback operator uses its own previous output
-                output = operators[i]->processWithFeedback();
+                output = operators[i]->processWithFeedback(pitchMod);
             } else {
-                // Regular operator (modulator or carrier)
-                // phaseMod is accumulated modulation, will be wrapped by oscillator
-                output = operators[i]->process(phaseMod);
+                output = operators[i]->process(phaseMod, pitchMod);
             }
 
-            // Store output for lower-index operators to use as modulation
-            // Output is in range approximately [-0.125, +0.125] due to OPERATOR_SCALING
+            // Store output for modulation
             modulationBuffer[i] = output;
 
             // Add to final output if carrier

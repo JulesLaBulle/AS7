@@ -1,6 +1,7 @@
 PROBLEMES IDENTIFIES:
 Constantes multiplicatrices du paramètre feedback ? Globalement feedback imprécis
 Detune ?
+OP scaling intéragit avec la modulation -> doit etre appliqué a la toute fin dans voice !!!
 
 Presets défectueux:
 7 trop d'harmoniques (fonctionne avec mod_scal=3.0 et fdb_scal=2.5)

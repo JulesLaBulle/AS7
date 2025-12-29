@@ -5,6 +5,7 @@
 #include "algorithm.h"
 #include "config.h"
 #include "lfo.h"
+#include "pitchenv.h"
 
 // -----------------------------------------------------------------------------
 // Voice Class
@@ -15,8 +16,11 @@ class Voice {
 private:
     std::array<Operator, NUM_OPERATORS> operators = {};
     Algorithm algorithm = {};
+    PitchEnvelope pitchEnv = {};
     
     const VoiceConfig* config = nullptr;
+    const PitchEnvelopeConfig* pitchEnvConfig = nullptr;
+    LFO* lfo = nullptr;
 
     uint8_t currentMidiNote = 0;
     
@@ -52,6 +56,15 @@ public:
         // Reset state
         reset();
     }
+
+    void setPitchEnvelopeConfig(const PitchEnvelopeConfig* peConfig) {
+        pitchEnvConfig = peConfig;
+        pitchEnv.setConfig(pitchEnvConfig);
+    }
+
+    void setLFO(LFO* lfoPtr) {
+        lfo = lfoPtr;
+    }
     
     void updateConfig(const VoiceConfig* voiceConfig) {
         if (!voiceConfig) return;
@@ -75,14 +88,16 @@ public:
     
         currentMidiNote = midiNote;
 
-        int note = static_cast<int>(midiNote) + static_cast<int>(config->transpose) - 24;   // Apply transpose
-        note = std::max(0, std::min(127, note));  // Clamp 0-127 to stay in bounds of uint8_t
+        int note = static_cast<int>(midiNote) + static_cast<int>(config->transpose) - 24;
+        note = std::max(0, std::min(127, note));
 
         algorithm.triggerAll(static_cast<uint8_t>(note), velocity);
+        pitchEnv.trigger();
     }
     
     void noteOff() {
         algorithm.releaseAll();
+        pitchEnv.release();
     }
 
     void setFeedback(uint8_t feedbackValue) {
@@ -93,13 +108,26 @@ public:
         algorithm.setConfig(algorithmConfig);
     }
     
-    inline float process() {        
-        return algorithm.process();
+    inline float process() {
+        // Combine pitch modulations: LFO pitch mod * pitch envelope pitch mod
+        float pitchMod = 1.0f;
+        float ampMod = 0.0f;
+        
+        if (lfo) {
+            pitchMod = lfo->getPitchMod();
+            ampMod = lfo->getAmpMod();
+        }
+        
+        // Apply pitch envelope as multiplicative pitch factor (like LFO)
+        pitchMod *= pitchEnv.process();
+        
+        return algorithm.process(pitchMod, ampMod);
     }
     
     // Reset voice to initial state
     void reset() {
         algorithm.resetAll();
+        pitchEnv.reset();
         for(size_t i = 0; i < NUM_OPERATORS; ++i) {
             operators[i].reset();
         }
@@ -116,12 +144,6 @@ public:
             }
         }
         return false;
-    }
-
-    void setLFO(LFO* lfo) {
-        for(auto& op : operators) {
-            op.setLFO(lfo);
-        }
     }
 };
 
