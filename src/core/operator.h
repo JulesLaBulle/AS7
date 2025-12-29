@@ -222,8 +222,10 @@ public:
     // Process as carrier or modulator
     inline float process(float phaseMod = 0.0f) {
         if (!config) return 0.0f;
+        if (!config->on) return 0.0f;
         
         const float envelopeLevel = env.process();
+        std::cout << " envelope level: " << envelopeLevel << std::endl;
 
         float oscillatorValue;
         
@@ -241,8 +243,10 @@ public:
     // Process with feedback (for feedback operator)
     inline float processWithFeedback() {
         if (!config) return 0.0f;
+        if (!config->on) return 0.0f;
         
         const float envelopeLevel = env.process();
+        std::cout << " envelope level: " << envelopeLevel << std::endl;
 
         float oscillatorValue;
         

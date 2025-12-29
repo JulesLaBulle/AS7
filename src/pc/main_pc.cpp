@@ -16,10 +16,10 @@
 // Test parameters
 constexpr char FILE_NAME[] = "fm_synth.wav";
 constexpr char BANK_FILE_PATH[] = "./presets/rom1a.syx";
-constexpr uint8_t PRESET_NUMBER = 31; // 0-31
+constexpr uint8_t PRESET_NUMBER = 10; // 0-31
 
 constexpr float NOTE_DURATION = 10.0f;
-constexpr float TOTAL_DURATION = 11.0f;
+constexpr float TOTAL_DURATION = 0.01f;
 constexpr size_t TOTAL_SAMPLES = static_cast<size_t>(SAMPLE_RATE * TOTAL_DURATION);
 
 int main() {
@@ -108,7 +108,10 @@ int main() {
         std::cout << "DEBUG: Bank loaded, now loading preset..." << std::endl;
         
         if (sysex.loadPreset(&presetConfig, PRESET_NUMBER)) {
-            presetConfig.voiceConfig.algorithm = Algorithms::ALL_ALGORITHMS[4]; // TESTING: Override algorithm for testing
+            // presetConfig.voiceConfig.algorithm = Algorithms::ALL_ALGORITHMS[4]; // TESTING: Override algorithm for testing
+
+            presetConfig.voiceConfig.operatorConfigs[0].envelope.r1 = 99;
+
             synth.configure(&presetConfig);
             std::cout << "Loaded preset: " << sysex.getPresetName(PRESET_NUMBER) << std::endl;
         }
@@ -145,8 +148,6 @@ int main() {
         // Process one sample
         samples.push_back(synth.process());
     }
-
-    std::cout << "HERE" << std::endl;
     
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);

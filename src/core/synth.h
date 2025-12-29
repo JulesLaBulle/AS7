@@ -115,7 +115,7 @@ public:
             
         }
 
-        if(sample >= 1.0f) std::cout << "Clipping: " << sample << std::endl; // TEENSY: replace with Serial.println
+        //if(sample >= 1.0f) std::cout << "Clipping: " << sample << std::endl; // TEENSY: replace with Serial.println
         // TODO: implement soft clipping with tanh (LUT) or similar
 
         return sample;

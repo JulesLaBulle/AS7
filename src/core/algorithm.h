@@ -104,6 +104,8 @@ public:
 
             if(!operators[i]) continue;
 
+            std::cout << "OP" << i;
+
             // Calculate modulation for this operator
             float phaseMod = 0.0f;
             for(int j = 0; j < config->modulatorCount[i]; ++j) {
@@ -130,6 +132,8 @@ public:
                 finalOutput += output;
             }
         }
+
+        std::cout << std::endl;
 
         return finalOutput;
     }
