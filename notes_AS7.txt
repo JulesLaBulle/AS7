@@ -23,8 +23,7 @@ Portamento
 Paramètres nécessitant une update:
 Feedback
 Algo
-paramètres frequency (detune, coarse, fine) mais recalculé au trigger au pire
-OSC Key Sync -> besoin d'une méthode pour modifier les 6op
+OSC Key Sync
 
 IDEES:
 Autres waveforms pour les oscillateurs

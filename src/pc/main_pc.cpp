@@ -16,7 +16,7 @@
 // Test parameters
 constexpr char FILE_NAME[] = "fm_synth.wav";
 constexpr char BANK_FILE_PATH[] = "./presets/rom1a.syx";
-constexpr uint8_t PRESET_NUMBER = 31; // 0-31
+constexpr uint8_t PRESET_NUMBER = 10; // 0-31
 
 constexpr float NOTE_DURATION = 8.0f;   
 constexpr float TOTAL_DURATION = 12.0f;
@@ -128,11 +128,11 @@ int main() {
     
     for (size_t i = 0; i < TOTAL_SAMPLES; ++i) {
         if (i == static_cast<size_t>(SAMPLE_RATE * 1.0f)) {
-            // synth.noteOn(72, 100);
+            synth.noteOn(72, 100);
         }
 
         if (i == static_cast<size_t>(SAMPLE_RATE * 2.0f)) {
-            // synth.noteOn(76, 100);
+            synth.noteOn(76, 100);
         }
 
         // Release note after NOTE_DURATION seconds

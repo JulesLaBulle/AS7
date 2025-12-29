@@ -4,38 +4,40 @@
 #include "constants.h"
 #include "lut.h"
 
+// Phase accumulator oscillator with FM support
 class Oscillator {
 private:    
     float phase = 0.0f;
-    float frequency = 0.0f;
+    float phaseInc = 0.0f;  // Cached: frequency * INV_SAMPLE_RATE
     
 public:
     void setFrequency(float freq) {
-        frequency = freq;
-        if (frequency < 0.0f) frequency = 0.0f;
-        if (frequency > 20000.0f) frequency = 20000.0f;
+        // Clamp frequency to valid range and precompute phase increment
+        if (freq < 0.0f) freq = 0.0f;
+        else if (freq > 20000.0f) freq = 20000.0f;
+        phaseInc = freq * INV_SAMPLE_RATE;
     }
     
-    float getFrequency() const { return frequency; }
+    float getFrequency() const { return phaseInc * SAMPLE_RATE; }
     
     void reset() { phase = 0.0f; }
     
-    // Process with optional phase modulation and pitch multiplier
-    // pitchMod: multiplier for frequency (1.0 = no change, 2.0 = octave up, 0.5 = octave down)
-    inline float process(float phaseMod = 0.0f, float pitchMod = 1.0f) {
-        // Calculate modulated phase: base phase + phase modulation
+    // Process with phase modulation and pitch multiplier
+    // pitchMod: frequency multiplier (1.0 = no change, 2.0 = octave up)
+    inline float process(float phaseMod, float pitchMod) {
+        // Modulated phase for output
         float modulatedPhase = phase + phaseMod;
         
-        // Wrap modulated phase to [0, 1] range
-        while (modulatedPhase >= 1.0f) modulatedPhase -= 1.0f;
-        while (modulatedPhase < 0.0f) modulatedPhase += 1.0f;
+        // Single conditional wrap (handles ±1 range from typical FM modulation)
+        if (modulatedPhase >= 1.0f) modulatedPhase -= 1.0f;
+        else if (modulatedPhase < 0.0f) modulatedPhase += 1.0f;
 
-        // Increment base phase for next sample (with pitch modulation)
-        phase += frequency * pitchMod * INV_SAMPLE_RATE;
+        // Advance base phase with pitch modulation
+        phase += phaseInc * pitchMod;
         
-        // Wrap phase to [0, 1] for next sample
-        if(phase < 0.0f) phase += 1.0f;
-        if(phase >= 1.0f) phase -= 1.0f;
+        // Wrap base phase
+        if (phase >= 1.0f) phase -= 1.0f;
+        else if (phase < 0.0f) phase += 1.0f;
         
         return LUT::sin(modulatedPhase);
     }
