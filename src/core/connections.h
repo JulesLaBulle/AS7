@@ -207,7 +207,7 @@ static const AlgorithmConfig ALGORITHM_4 = []() {
         for (int j = 0; j < 6; ++j)
             config.modulatorIndices[i][j] = indices[i][j];
     
-    bool carriers[6] = {true, false, false, false, false, false};
+    bool carriers[6] = {true, false, false, true, false, false};
     for (int i = 0; i < 6; ++i)
         config.isCarrier[i] = carriers[i];
     
@@ -309,7 +309,7 @@ static const AlgorithmConfig ALGORITHM_6 = []() {
         for (int j = 0; j < 6; ++j)
             config.modulatorIndices[i][j] = indices[i][j];
     
-    bool carriers[6] = {true, false, true, false, false, false};
+    bool carriers[6] = {true, false, true, false, true, false};
     for (int i = 0; i < 6; ++i)
         config.isCarrier[i] = carriers[i];
     
