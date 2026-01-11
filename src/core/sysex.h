@@ -410,7 +410,20 @@ public:
     }
     
     // Get the name of a preset.
-    std::string getPresetName(uint8_t presetIndex) {
+    #ifdef PLATFORM_TEENSY
+    // On Teensy: return pointer to preset name (zero-copy, no allocation)
+    // The returned pointer points into bankParams, valid until next loadBank()
+    const char* getPresetName(uint8_t presetIndex) const {
+        static char invalidName[] = "Invalid";
+        if (!bankLoaded || presetIndex >= 32) {
+            return invalidName;
+        }
+        // Return pointer directly into bankParams (parameters 145-154 are the name)
+        return reinterpret_cast<const char*>(&bankParams[presetIndex][145]);
+    }
+    #else
+    // On PC: return std::string (simpler for debugging)
+    std::string getPresetName(uint8_t presetIndex) const {
         if (!bankLoaded || presetIndex >= 32) {
             return "Invalid";
         }
@@ -421,11 +434,45 @@ public:
         }
         return std::string(name);
     }
+    #endif
+    
+    // Get all preset names at once (for menu display)
+    #ifdef PLATFORM_TEENSY
+    // On Teensy: fill provided buffer with pointers (zero-copy)
+    // Each pointer points into bankParams, valid until next loadBank()
+    void getAllPresetsNames(const char* names[32]) const {
+        for (uint8_t i = 0; i < 32; ++i) {
+            if (bankLoaded) {
+                names[i] = reinterpret_cast<const char*>(&bankParams[i][145]);
+            } else {
+                static char empty[] = "";
+                names[i] = empty;
+            }
+        }
+    }
+    #else
+    // On PC: return array of std::string
+    std::array<std::string, 32> getAllPresetsNames() const {
+        std::array<std::string, 32> names;
+        for (uint8_t i = 0; i < 32; ++i) {
+            names[i] = getPresetName(i);
+        }
+        return names;
+    }
+    #endif
     
     // Get the loaded bank name.
-    std::string getBankName() const {
+    #ifdef PLATFORM_TEENSY
+    // On Teensy: return pointer to bank name (zero-copy)
+    const char* getBankName() const {
+        return bankName.c_str();
+    }
+    #else
+    // On PC: return std::string
+    const std::string& getBankName() const {
         return bankName;
     }
+    #endif
     
     // Check if a bank is loaded.
     bool isBankLoaded() const {

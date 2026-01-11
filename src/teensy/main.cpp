@@ -33,7 +33,7 @@ void setup() {
     // Load bank from SD
     if (sysex.loadBank("/presets/ROM1A_Master.syx")) {
         Serial.print(F("Bank loaded: "));
-        Serial.println(sysex.getBankName().c_str());
+        Serial.println(sysex.getBankName());
         
         // Load preset
         if (sysex.loadPreset(&config, 0)) {
