@@ -6,9 +6,6 @@
 #include "voice.h"
 #include "lfo.h"
 
-// Enable debug output (comment out for production/Teensy)
-// #define SYNTH_DEBUG
-
 // Polyphonic FM synthesizer
 class Synth {
 private:
@@ -106,13 +103,6 @@ public:
                 sample += voice.process();
             }
         }
-
-#ifdef SYNTH_DEBUG
-        if (sample >= 1.0f) {
-            // Teensy: Serial.println(sample);
-            // PC: std::cout << "Clipping: " << sample << std::endl;
-        }
-#endif
 
         return sample;
     }
