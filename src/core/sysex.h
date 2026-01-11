@@ -3,10 +3,16 @@
 
 #include <array>
 #include <cstdint>
-#include <fstream>
+#include <cstring>
 #include <vector>
 #include <string>
-#include <cstring>
+
+// Platform-specific includes for file I/O
+#ifdef PLATFORM_TEENSY
+    #include <SD.h>
+#else
+    #include <fstream>
+#endif
 
 #ifdef DEBUG_PC
 #include <iostream>
@@ -259,6 +265,44 @@ public:
     bool loadBank(const std::string& filename) {
         bankLoaded = false;
 
+        #ifdef PLATFORM_TEENSY
+        // Teensy: Read from SD card
+        File file = SD.open(filename.c_str());
+        if (!file) {
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("Error: Could not open file "));
+            Serial.println(filename.c_str());
+            #endif
+            return false;
+        }
+        
+        size_t size = file.size();
+        
+        // Check file size
+        if (size != 4104) {
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("Warning: File size is "));
+            Serial.print(size);
+            Serial.println(F(" bytes (expected 4104 for 32-voice DX7 dump)"));
+            #endif
+        }
+        
+        // Read into vector
+        std::vector<uint8_t> buffer(size);
+        size_t bytesRead = file.read(buffer.data(), size);
+        file.close();
+        
+        if (bytesRead < size) {
+            #ifdef DEBUG_TEENSY
+            Serial.println(F("Error: Could not read file"));
+            #endif
+            return false;
+        }
+        
+        #else
+        // PC: Read from filesystem
+        bankLoaded = false;
+
         // Open file
         std::ifstream file(filename, std::ios::binary | std::ios::ate);
         if (!file.is_open()) {
@@ -282,14 +326,11 @@ public:
             #ifdef DEBUG_PC
             std::cerr << "Error: Could not read file " << filename << std::endl;
             #endif
-            #ifdef DEBUG_TEENSY
-            Serial.print(F("Error: Could not read file "));
-            Serial.println(filename.c_str());
-            #endif
             return false;
         }
+        #endif
         
-        // Extract bank name from filename
+        // Extract bank name from filename (same for both platforms)
         bankName = extractFilename(filename);
         
         // Check file size

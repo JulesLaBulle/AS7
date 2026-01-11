@@ -1,6 +1,8 @@
 PROBLEMES IDENTIFIES:
 Detune ?
 
+
+
 Presets défectueux:
 7 trop d'harmoniques (fb)
 9 attaque trop forte (c ok en vrai)
@@ -9,22 +11,27 @@ Presets défectueux:
 13 trop d'harmoniques (fb)
 ...
 
+
+
 A faire: 
-Parameters
+Parameters (implémentation dans le processing audio)
 Pitch bend, range
 Modulation wheel, range, assign
 Portamento 
-Save user presets
 
-Tune
+Save user presets
+Sysex: getPresetList pour choix de preset
+
 Traitement par 64 samples ?
 
-REMOVE prints TEENSY
+
 
 Paramètres nécessitant une update:
 Feedback
 Algo
 OSC Key Sync
+
+
 
 IDEES:
 Autres waveforms pour les oscillateurs

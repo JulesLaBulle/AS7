@@ -17,7 +17,7 @@
 
 // Test parameters
 constexpr char FILE_NAME[] = "fm_synth.wav";
-constexpr char BANK_FILE_PATH[] = "./presets/rom1a.syx";
+constexpr char BANK_FILE_PATH[] = "./presets/ROM1A_Master.syx";
 constexpr uint8_t PRESET_NUMBER = 10; // 0-31
 
 constexpr float NOTE_DURATION = 8.0f;   
@@ -116,7 +116,7 @@ int main() {
             std::cout << "Loaded preset: " << sysex.getPresetName(PRESET_NUMBER) << std::endl;
         }
     }
-    // printSynthConfig(presetConfig);
+    printSynthConfig(presetConfig);
     
     // -------------------------------------------------------------------------
     // Generate audio

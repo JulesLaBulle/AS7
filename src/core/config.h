@@ -91,13 +91,19 @@ struct VoiceConfig {
     
     uint8_t feedback = 0; // Feedback level (0-7)
     uint8_t transpose = 24; // Global transpose (in semitones)
-    //                                                      TODO: change this, memory allocation issue
-    VoiceConfig(OperatorConfig opConfigs[NUM_OPERATORS] = new OperatorConfig[NUM_OPERATORS], const AlgorithmConfig* alg = nullptr, uint8_t fb = 0, uint8_t transp = 24) 
-        : algorithm(alg), feedback(fb), transpose(transp) {
-            for (size_t i = 0; i < NUM_OPERATORS; ++i) {
-                operatorConfigs[i] = opConfigs[i];
-            }
+    
+    VoiceConfig() : algorithm(nullptr), feedback(0), transpose(24) {
+        for (size_t i = 0; i < NUM_OPERATORS; ++i) {
+            operatorConfigs[i] = OperatorConfig();
         }
+    }
+    
+    VoiceConfig(OperatorConfig opConfigs[NUM_OPERATORS], const AlgorithmConfig* alg, uint8_t fb = 0, uint8_t transp = 24) 
+        : algorithm(alg), feedback(fb), transpose(transp) {
+        for (size_t i = 0; i < NUM_OPERATORS; ++i) {
+            operatorConfigs[i] = opConfigs[i];
+        }
+    }
 };
 
 struct LFOConfig {
@@ -146,7 +152,7 @@ struct SynthConfig {
 };
 
 void printSynthConfig([[maybe_unused]] const SynthConfig& config) {
-    #ifdef DEBUG_PC
+    #ifndef PLATFORM_TEENSY
     std::cout << "=== SYNTH CONFIGURATION ===\n\n";
     
     // 1. VOICE CONFIG
@@ -230,9 +236,7 @@ void printSynthConfig([[maybe_unused]] const SynthConfig& config) {
     std::cout << "=== GLOBAL SETTINGS ===\n";
     std::cout << "Monophonic: " << (config.monophonic ? "Yes" : "No") << "\n";
     std::cout << "================================\n";
-    #endif
-
-    #ifdef DEBUG_TEENSY
+    #else
     Serial.println(F("=== SYNTH CONFIGURATION ==="));
     Serial.println();
     

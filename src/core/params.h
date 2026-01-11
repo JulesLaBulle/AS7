@@ -2,7 +2,12 @@
 #define PARAMS_H
 
 #include <cstdint>
-#include <cstdio>
+
+#ifdef PLATFORM_TEENSY
+    #include <SD.h>
+#else
+    #include <cstdio>
+#endif
 
 #ifdef DEBUG_PC
 #include <iostream>
@@ -51,9 +56,51 @@ struct Params {
     
     // Load parameters from a file
     bool loadFromFile(const char* filePath = PARAMS_FILE_PATH) {
+        #ifdef PLATFORM_TEENSY
+        // Teensy: Read from SD card
+        File file = SD.open(filePath);
+        if (!file) {
+            setDefaults();
+            return false;
+        }
+        
+        // Read and verify magic number
+        uint32_t magic = 0;
+        if (file.read((uint8_t*)&magic, sizeof(magic)) != sizeof(magic) || magic != PARAMS_MAGIC) {
+            file.close();
+            setDefaults();
+            return false;
+        }
+        
+        // Read and check version
+        uint8_t version = 0;
+        if (file.read(&version, sizeof(version)) != sizeof(version)) {
+            file.close();
+            setDefaults();
+            return false;
+        }
+        
+        if (version != PARAMS_VERSION) {
+            file.close();
+            setDefaults();
+            return false;
+        }
+        
+        // Read parameters
+        bool success = true;
+        success &= (file.read((uint8_t*)&pitchBendRange, sizeof(pitchBendRange)) == sizeof(pitchBendRange));
+        success &= (file.read((uint8_t*)&modWheelIntensity, sizeof(modWheelIntensity)) == sizeof(modWheelIntensity));
+        success &= (file.read((uint8_t*)&modWheelAssignment.pitchModDepth, sizeof(bool)) == sizeof(bool));
+        success &= (file.read((uint8_t*)&modWheelAssignment.ampModDepth, sizeof(bool)) == sizeof(bool));
+        success &= (file.read((uint8_t*)&modWheelAssignment.egBias, sizeof(bool)) == sizeof(bool));
+        success &= (file.read((uint8_t*)&midiChannel, sizeof(midiChannel)) == sizeof(midiChannel));
+        
+        file.close();
+        
+        #else
+        // PC: Read from filesystem
         FILE* file = fopen(filePath, "rb");
         if (!file) {
-            // File doesn't exist, use defaults
             setDefaults();
             return false;
         }
@@ -74,8 +121,6 @@ struct Params {
             return false;
         }
         
-        // For now, only support current version
-        // Future versions can add migration logic here
         if (version != PARAMS_VERSION) {
             fclose(file);
             setDefaults();
@@ -92,6 +137,7 @@ struct Params {
         success &= (fread(&midiChannel, sizeof(midiChannel), 1, file) == 1);
         
         fclose(file);
+        #endif
         
         if (!success) {
             setDefaults();
@@ -106,6 +152,38 @@ struct Params {
     
     // Save current parameters to a file
     bool saveToFile(const char* filePath = PARAMS_FILE_PATH) const {
+        #ifdef PLATFORM_TEENSY
+        // Teensy: Write to SD card
+        if (SD.exists(filePath)) {
+            SD.remove(filePath);
+        }
+        File file = SD.open(filePath, FILE_WRITE);
+        if (!file) {
+            return false;
+        }
+        
+        bool success = true;
+        
+        // Write magic number
+        uint32_t magic = PARAMS_MAGIC;
+        success &= (file.write((uint8_t*)&magic, sizeof(magic)) == sizeof(magic));
+        
+        // Write version
+        uint8_t version = PARAMS_VERSION;
+        success &= (file.write(&version, sizeof(version)) == sizeof(version));
+        
+        // Write parameters
+        success &= (file.write((uint8_t*)&pitchBendRange, sizeof(pitchBendRange)) == sizeof(pitchBendRange));
+        success &= (file.write((uint8_t*)&modWheelIntensity, sizeof(modWheelIntensity)) == sizeof(modWheelIntensity));
+        success &= (file.write((uint8_t*)&modWheelAssignment.pitchModDepth, sizeof(bool)) == sizeof(bool));
+        success &= (file.write((uint8_t*)&modWheelAssignment.ampModDepth, sizeof(bool)) == sizeof(bool));
+        success &= (file.write((uint8_t*)&modWheelAssignment.egBias, sizeof(bool)) == sizeof(bool));
+        success &= (file.write((uint8_t*)&midiChannel, sizeof(midiChannel)) == sizeof(midiChannel));
+        
+        file.close();
+        
+        #else
+        // PC: Write to filesystem
         FILE* file = fopen(filePath, "wb");
         if (!file) {
             return false;
@@ -130,6 +208,7 @@ struct Params {
         success &= (fwrite(&midiChannel, sizeof(midiChannel), 1, file) == 1);
         
         fclose(file);
+        #endif
         
         return success;
     }
@@ -149,15 +228,15 @@ struct Params {
     // Print current parameters (for debugging)
     void print() const {
         #ifdef DEBUG_PC
-        std::cout << "=== GLOBAL PARAMETERS ===\n" << std::endl;
-        std::cout << "Pitch Bend Range: " << pitchBendRange << " semitones\n" << std::endl;
-        std::cout << "Mod Wheel Intensity: " << modWheelIntensity << "\n" << std::endl;
-        std::cout << "Mod Wheel Assignment:\n" << std::endl;
-        std::cout << "  - Pitch Mod Depth: " << (modWheelAssignment.pitchModDepth ? "ON" : "OFF") << "\n" << std::endl;
-        std::cout << "  - Amp Mod Depth: " << (modWheelAssignment.ampModDepth ? "ON" : "OFF") << "\n" << std::endl;
-        std::cout << "  - EG Bias: " << (modWheelAssignment.egBias ? "ON" : "OFF") << "\n" << std::endl;
-        std::cout << "MIDI Channel: " << midiChannel << (midiChannel == 0 ? " (OMNI)" : "") << "\n" << std::endl;
-        std::cout << "=========================\n" << std::endl;
+        std::cout << "=== GLOBAL PARAMETERS ===\n";
+        std::cout << "Pitch Bend Range: " << static_cast<int>(pitchBendRange) << " semitones\n";
+        std::cout << "Mod Wheel Intensity: " << static_cast<int>(modWheelIntensity) << "\n";
+        std::cout << "Mod Wheel Assignment:\n";
+        std::cout << "  - Pitch Mod Depth: " << (modWheelAssignment.pitchModDepth ? "ON" : "OFF") << "\n";
+        std::cout << "  - Amp Mod Depth: " << (modWheelAssignment.ampModDepth ? "ON" : "OFF") << "\n";
+        std::cout << "  - EG Bias: " << (modWheelAssignment.egBias ? "ON" : "OFF") << "\n";
+        std::cout << "MIDI Channel: " << static_cast<int>(midiChannel) << (midiChannel == 0 ? " (OMNI)" : "") << "\n";
+        std::cout << "=========================" << std::endl;
         #endif
 
         #ifdef DEBUG_TEENSY

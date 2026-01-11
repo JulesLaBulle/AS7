@@ -7,7 +7,7 @@
 // Audio
 constexpr float SAMPLE_RATE = 44100.0f;
 constexpr float INV_SAMPLE_RATE = 1.0f / SAMPLE_RATE;
-constexpr float PI = 3.14159265f;
+constexpr float TWO_PI_F = 6.28318530718f; // 2*PI for oscillator phase calculations
 
 // Synth
 constexpr uint8_t POLYPHONY = 16;

@@ -18,7 +18,7 @@ public:
         if (lutInitialized) return;
         
         for (size_t i = 0; i < OSC_LUT_SIZE; ++i) {
-            const float angle = 2.0f * PI * static_cast<float>(i) * INV_OSC_LUT_SIZE;
+            const float angle = TWO_PI_F * static_cast<float>(i) * INV_OSC_LUT_SIZE;
             sinLUT[i] = std::sin(angle);
         }
 
