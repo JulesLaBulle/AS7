@@ -7,7 +7,10 @@
 #include <vector>
 #include <string>
 #include <cstring>
+
+#ifdef DEBUG_PC
 #include <iostream>
+#endif
 
 #include "core/config.h"
 #include "core/connections.h"
@@ -152,7 +155,13 @@ private:
             
             // Check parameter bounds before accessing
             if (paramBase + 20 >= 155) {
+                #ifdef DEBUG_PC
                 std::cerr << "Error: Parameter index out of bounds for operator " << dx7Op << std::endl;
+                #endif
+                #ifdef DEBUG_TEENSY
+                Serial.print(F("Error: Parameter index out of bounds for operator "));
+                Serial.println(dx7Op);
+                #endif
                 return;
             }
             
@@ -195,8 +204,15 @@ private:
         
         // Check algorithm index bounds
         if (params[134] >= 32) {
+            #ifdef DEBUG_PC
             std::cerr << "Warning: Algorithm index " << static_cast<int>(params[134]) 
                       << " out of range, using 0" << std::endl;
+            #endif
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("Warning: Algorithm index "));
+            Serial.print(params[134]);
+            Serial.println(F(" out of range, using 0"));
+            #endif
             voiceConfig.algorithm = Algorithms::ALL_ALGORITHMS[0];
         } else {
             voiceConfig.algorithm = Algorithms::ALL_ALGORITHMS[params[134]];
@@ -246,7 +262,13 @@ public:
         // Open file
         std::ifstream file(filename, std::ios::binary | std::ios::ate);
         if (!file.is_open()) {
+            #ifdef DEBUG_PC
             std::cerr << "Error: Could not open file " << filename << std::endl;
+            #endif
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("Error: Could not open file "));
+            Serial.println(filename.c_str());
+            #endif
             return false;
         }
         
@@ -257,7 +279,13 @@ public:
         // Read entire file
         std::vector<uint8_t> buffer(static_cast<size_t>(size));
         if (!file.read(reinterpret_cast<char*>(buffer.data()), size)) {
+            #ifdef DEBUG_PC
             std::cerr << "Error: Could not read file " << filename << std::endl;
+            #endif
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("Error: Could not read file "));
+            Serial.println(filename.c_str());
+            #endif
             return false;
         }
         
@@ -266,8 +294,15 @@ public:
         
         // Check file size
         if (buffer.size() != 4104) {
+            #ifdef DEBUG_PC
             std::cerr << "Warning: File size is " << buffer.size() 
                       << " bytes (expected 4104 for 32-voice DX7 dump)" << std::endl;
+            #endif
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("Warning: File size is "));
+            Serial.print(buffer.size());
+            Serial.println(F(" bytes (expected 4104 for 32-voice DX7 dump)"));
+            #endif
         }
         
         // Extract 32 voices (each 128 bytes of packed data)
@@ -275,7 +310,12 @@ public:
             size_t voiceOffset = 6 + (voice * 128);
             
             if (buffer.size() < voiceOffset + 128) {
+                #ifdef DEBUG_PC
                 std::cerr << "Error: File too small for 32 voices" << std::endl;
+                #endif
+                #ifdef DEBUG_TEENSY
+                Serial.println(F("Error: File too small for 32 voices"));
+                #endif
                 bankLoaded = false;
                 return false;
             }
@@ -285,20 +325,39 @@ public:
         }
         
         bankLoaded = true;
+        #ifdef DEBUG_PC
         std::cout << "Successfully loaded DX7 bank: " << bankName 
                   << " (" << buffer.size() << " bytes)" << std::endl;
+        #endif
+        #ifdef DEBUG_TEENSY
+        Serial.print(F("Successfully loaded DX7 bank: "));
+        Serial.print(bankName.c_str());
+        Serial.print(F(" ("));
+        Serial.print(buffer.size());
+        Serial.println(F(" bytes)"));
+        #endif
         return true;
     }
     
     // Load a specific preset into a SynthConfig structure.
     bool loadPreset(SynthConfig* config, uint8_t presetIndex) {
         if (!bankLoaded) {
+            #ifdef DEBUG_PC
             std::cerr << "Error: No bank loaded" << std::endl;
+            #endif
+            #ifdef DEBUG_TEENSY
+            Serial.println(F("Error: No bank loaded"));
+            #endif
             return false;
         }
 
         if (presetIndex >= 32) {
+            #ifdef DEBUG_PC
             std::cerr << "Error: Preset index must be 0-31" << std::endl;
+            #endif
+            #ifdef DEBUG_TEENSY
+            Serial.println(F("Error: Preset index must be 0-31"));
+            #endif
             return false;
         }
 

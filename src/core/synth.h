@@ -158,6 +158,18 @@ public:
             }
         }
 
+        #ifdef DEBUG_PC
+        if(sample > 1.0f || sample < -1.0f) {
+            std::cout << "CLIPPING: " << sample << std::endl;
+        }
+        #endif
+        #ifdef DEBUG_TEENSY
+        if(sample > 1.0f || sample < -1.0f) {
+            Serial.print(F("CLIPPING: ")); 
+            Serial.println(sample);
+        }
+        #endif
+
         return sample;
     }
 

@@ -4,6 +4,10 @@
 #include "constants.h"
 #include <cstdint>
 
+#ifdef DEBUG_PC
+#include <iostream>
+#endif
+
 struct EnvelopeConfig {
     uint8_t outputLevel = 99; // Operator volume (0-99)
 
@@ -141,7 +145,8 @@ struct SynthConfig {
         : voiceConfig(vConfig), lfoConfig(lConfig), pitchEnvelopeConfig(peConfig), monophonic(mono) {}
 };
 
-void printSynthConfig(const SynthConfig& config) {
+void printSynthConfig([[maybe_unused]] const SynthConfig& config) {
+    #ifdef DEBUG_PC
     std::cout << "=== SYNTH CONFIGURATION ===\n\n";
     
     // 1. VOICE CONFIG
@@ -225,6 +230,124 @@ void printSynthConfig(const SynthConfig& config) {
     std::cout << "=== GLOBAL SETTINGS ===\n";
     std::cout << "Monophonic: " << (config.monophonic ? "Yes" : "No") << "\n";
     std::cout << "================================\n";
+    #endif
+
+    #ifdef DEBUG_TEENSY
+    Serial.println(F("=== SYNTH CONFIGURATION ==="));
+    Serial.println();
+    
+    // 1. VOICE CONFIG
+    Serial.println(F("=== VOICE CONFIG ==="));
+    Serial.print(F("Feedback: "));
+    Serial.println(config.voiceConfig.feedback);
+    Serial.print(F("Transpose: "));
+    Serial.print(config.voiceConfig.transpose);
+    Serial.print(F(" (effective: "));
+    Serial.print(static_cast<int>(config.voiceConfig.transpose) - 24);
+    Serial.println(F(" semitones)"));
+    Serial.print(F("Algorithm pointer: 0x"));
+    Serial.println((unsigned long)config.voiceConfig.algorithm, HEX);
+    Serial.println();
+    
+    // 2. OPERATOR CONFIGS
+    for (size_t op = 0; op < NUM_OPERATORS; ++op) {
+        const OperatorConfig& opConfig = config.voiceConfig.operatorConfigs[op];
+        Serial.print(F("=== OPERATOR "));
+        Serial.print(op + 1);
+        Serial.println(F(" ==="));
+        Serial.print(F("  Enabled: "));
+        Serial.println(opConfig.on ? F("Yes") : F("No"));
+        Serial.print(F("  Velocity Sensitivity: "));
+        Serial.println(opConfig.velocitySensitivity);
+        Serial.print(F("  Amp Mod Sensitivity: "));
+        Serial.println(opConfig.ampModSens);
+        Serial.print(F("  OSC Key Sync: "));
+        Serial.println(opConfig.OSCKeySync ? F("Yes") : F("No"));
+        
+        // Level Scaling
+        Serial.println(F("  Level Scaling:"));
+        Serial.print(F("    Breakpoint: "));
+        Serial.println(opConfig.lvlSclBreakpoint);
+        Serial.print(F("    Left Depth: "));
+        Serial.println(opConfig.lvlSclLeftDepth);
+        Serial.print(F("    Right Depth: "));
+        Serial.println(opConfig.lvlSclRightDepth);
+        Serial.print(F("    Left Curve: "));
+        Serial.println(opConfig.lvlSclLeftCurve);
+        Serial.print(F("    Right Curve: "));
+        Serial.println(opConfig.lvlSclRightCurve);
+        
+        // Frequency Config
+        const FrequencyConfig& freq = opConfig.frequency;
+        Serial.println(F("  Frequency Config:"));
+        Serial.print(F("    Fixed Frequency: "));
+        Serial.println(freq.fixedFrequency ? F("Yes") : F("No"));
+        Serial.print(F("    Detune: "));
+        Serial.println(freq.detune);
+        Serial.print(F("    Coarse: "));
+        Serial.println(freq.coarse);
+        Serial.print(F("    Fine: "));
+        Serial.println(freq.fine);
+        
+        // Envelope Config
+        const EnvelopeConfig& env = opConfig.envelope;
+        Serial.println(F("  Envelope Config:"));
+        Serial.print(F("    Output Level: "));
+        Serial.println(env.outputLevel);
+        Serial.print(F("    Levels L1-L4: "));
+        Serial.print(env.l1); Serial.print(F(", "));
+        Serial.print(env.l2); Serial.print(F(", "));
+        Serial.print(env.l3); Serial.print(F(", "));
+        Serial.println(env.l4);
+        Serial.print(F("    Rates R1-R4: "));
+        Serial.print(env.r1); Serial.print(F(", "));
+        Serial.print(env.r2); Serial.print(F(", "));
+        Serial.print(env.r3); Serial.print(F(", "));
+        Serial.println(env.r4);
+        Serial.print(F("    Rate Scaling: "));
+        Serial.println(env.rateScaling);
+        Serial.println();
+    }
+    
+    // 3. LFO CONFIG
+    Serial.println(F("=== LFO CONFIG ==="));
+    Serial.print(F("Waveform: "));
+    Serial.print(config.lfoConfig.waveform);
+    Serial.println(F(" (0=tri, 1=saw↓, 2=saw↑, 3=sqr, 4=sin, 5=S&H)"));
+    Serial.print(F("Speed: "));
+    Serial.println(config.lfoConfig.speed);
+    Serial.print(F("Delay: "));
+    Serial.println(config.lfoConfig.delay);
+    Serial.print(F("Pitch Mod Depth: "));
+    Serial.println(config.lfoConfig.pitchModDepth);
+    Serial.print(F("Amp Mod Depth: "));
+    Serial.println(config.lfoConfig.ampModDepth);
+    Serial.print(F("Pitch Mod Sens: "));
+    Serial.println(config.lfoConfig.pitchModSens);
+    Serial.print(F("LFO Key Sync: "));
+    Serial.println(config.lfoConfig.LFOKeySync ? F("Yes") : F("No"));
+    Serial.println();
+    
+    // 4. PITCH ENVELOPE CONFIG
+    Serial.println(F("=== PITCH ENVELOPE CONFIG ==="));
+    Serial.print(F("Levels L1-L4: "));
+    Serial.print(config.pitchEnvelopeConfig.l1); Serial.print(F(", "));
+    Serial.print(config.pitchEnvelopeConfig.l2); Serial.print(F(", "));
+    Serial.print(config.pitchEnvelopeConfig.l3); Serial.print(F(", "));
+    Serial.println(config.pitchEnvelopeConfig.l4);
+    Serial.print(F("Rates R1-R4: "));
+    Serial.print(config.pitchEnvelopeConfig.r1); Serial.print(F(", "));
+    Serial.print(config.pitchEnvelopeConfig.r2); Serial.print(F(", "));
+    Serial.print(config.pitchEnvelopeConfig.r3); Serial.print(F(", "));
+    Serial.println(config.pitchEnvelopeConfig.r4);
+    Serial.println();
+    
+    // 5. GLOBAL SETTINGS
+    Serial.println(F("=== GLOBAL SETTINGS ==="));
+    Serial.print(F("Monophonic: "));
+    Serial.println(config.monophonic ? F("Yes") : F("No"));
+    Serial.println(F("================================"));
+    #endif
 }
 
 #endif // CONFIG_H

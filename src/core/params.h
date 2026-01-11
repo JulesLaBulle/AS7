@@ -3,7 +3,10 @@
 
 #include <cstdint>
 #include <cstdio>
-#include <cstring>
+
+#ifdef DEBUG_PC
+#include <iostream>
+#endif
 
 #include "constants.h"
 
@@ -145,15 +148,40 @@ struct Params {
     
     // Print current parameters (for debugging)
     void print() const {
-        printf("=== GLOBAL PARAMETERS ===\n");
-        printf("Pitch Bend Range: %d semitones\n", pitchBendRange);
-        printf("Mod Wheel Intensity: %d\n", modWheelIntensity);
-        printf("Mod Wheel Assignment:\n");
-        printf("  - Pitch Mod Depth: %s\n", modWheelAssignment.pitchModDepth ? "ON" : "OFF");
-        printf("  - Amp Mod Depth: %s\n", modWheelAssignment.ampModDepth ? "ON" : "OFF");
-        printf("  - EG Bias: %s\n", modWheelAssignment.egBias ? "ON" : "OFF");
-        printf("MIDI Channel: %d%s\n", midiChannel, midiChannel == 0 ? " (OMNI)" : "");
-        printf("=========================\n");
+        #ifdef DEBUG_PC
+        std::cout << "=== GLOBAL PARAMETERS ===\n" << std::endl;
+        std::cout << "Pitch Bend Range: " << pitchBendRange << " semitones\n" << std::endl;
+        std::cout << "Mod Wheel Intensity: " << modWheelIntensity << "\n" << std::endl;
+        std::cout << "Mod Wheel Assignment:\n" << std::endl;
+        std::cout << "  - Pitch Mod Depth: " << (modWheelAssignment.pitchModDepth ? "ON" : "OFF") << "\n" << std::endl;
+        std::cout << "  - Amp Mod Depth: " << (modWheelAssignment.ampModDepth ? "ON" : "OFF") << "\n" << std::endl;
+        std::cout << "  - EG Bias: " << (modWheelAssignment.egBias ? "ON" : "OFF") << "\n" << std::endl;
+        std::cout << "MIDI Channel: " << midiChannel << (midiChannel == 0 ? " (OMNI)" : "") << "\n" << std::endl;
+        std::cout << "=========================\n" << std::endl;
+        #endif
+
+        #ifdef DEBUG_TEENSY
+        Serial.println(F("=== GLOBAL PARAMETERS ==="));
+        Serial.print(F("Pitch Bend Range: "));
+        Serial.print(pitchBendRange);
+        Serial.println(F(" semitones"));
+        Serial.print(F("Mod Wheel Intensity: "));
+        Serial.println(modWheelIntensity);
+        Serial.println(F("Mod Wheel Assignment:"));
+        Serial.print(F("  - Pitch Mod Depth: "));
+        Serial.println(modWheelAssignment.pitchModDepth ? F("ON") : F("OFF"));
+        Serial.print(F("  - Amp Mod Depth: "));
+        Serial.println(modWheelAssignment.ampModDepth ? F("ON") : F("OFF"));
+        Serial.print(F("  - EG Bias: "));
+        Serial.println(modWheelAssignment.egBias ? F("ON") : F("OFF"));
+        Serial.print(F("MIDI Channel: "));
+        Serial.print(midiChannel);
+        if (midiChannel == 0) {
+            Serial.print(F(" (OMNI)")); 
+        }
+        Serial.println();
+        Serial.println(F("========================="));
+        #endif
     }
 };
 

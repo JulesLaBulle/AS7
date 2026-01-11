@@ -1,3 +1,5 @@
+#define DEBUG_PC
+
 #include <iostream>
 #include <vector>
 #include <chrono>
