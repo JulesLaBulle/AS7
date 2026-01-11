@@ -160,6 +160,14 @@ constexpr int8_t PITCHENV_TAB[100] = {
     82, 92, 103, 115, 127
 };
 
+// Parameters constants
+// Default file path for global parameters persistence
+// On Teensy, this would be on SD card; on PC, in current directory
+constexpr const char* PARAMS_FILE_PATH = "params.bin";
+constexpr uint8_t PARAMS_VERSION = 1;
+constexpr uint32_t PARAMS_MAGIC = 0x47504152; // "GPAR"
+
+// Inverse constants for parameter normalization
 constexpr float INV_PARAM_99 = 1.0f / 99.0f;
 constexpr float INV_PARAM_7 = 1.0f / 7.0f;
 constexpr float INV_PARAM_3 = 1.0f / 3.0f;

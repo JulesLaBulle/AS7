@@ -18,6 +18,8 @@ Portamento
 Tune
 Traitement par 64 samples ?
 
+REMOVE prints TEENSY
+
 Paramètres nécessitant une update:
 Feedback
 Algo

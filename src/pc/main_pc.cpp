@@ -30,6 +30,7 @@ int main() {
     // Create and configure the voice
     // -------------------------------------------------------------------------
     Synth synth = Synth();
+    synth.initParams();
     
     /*
     OperatorConfig opConfigs[6] = {
@@ -106,14 +107,14 @@ int main() {
 
     SysexHandler sysex;
     if (sysex.loadBank(BANK_FILE_PATH)) {
-        std::cout << "DEBUG: Bank loaded, now loading preset..." << std::endl;
+        std::cout << "Bank loaded, now loading preset..." << std::endl;
         
         if (sysex.loadPreset(&presetConfig, PRESET_NUMBER)) {
             synth.configure(&presetConfig);
             std::cout << "Loaded preset: " << sysex.getPresetName(PRESET_NUMBER) << std::endl;
         }
     }
-    printSynthConfig(presetConfig);
+    // printSynthConfig(presetConfig);
     
     // -------------------------------------------------------------------------
     // Generate audio

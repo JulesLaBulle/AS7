@@ -5,6 +5,7 @@
 #include "config.h"
 #include "voice.h"
 #include "lfo.h"
+#include "params.h"
 
 // Polyphonic FM synthesizer
 class Synth {
@@ -16,12 +17,65 @@ private:
 
     LFO lfo = {};
 
-public:
-    const SynthConfig* config = nullptr;  // Pointeur const vers config (adresse fixe)
-    Synth() = default;
+    Params params = {};
 
+public:
+    const SynthConfig* config = nullptr;
+    Synth() = default;
+    
+    // Parameters management
+    bool initParams(const char* filePath = PARAMS_FILE_PATH) {
+        return params.loadFromFile(filePath);
+    }
+
+    bool saveParams(const char* filePath = PARAMS_FILE_PATH) const {
+        return params.saveToFile(filePath);
+    }
+    
+    void setPitchBendRange(uint8_t semitones) {
+        params.pitchBendRange = (semitones > 24) ? 24 : semitones;
+    }
+    
+    void setModWheelIntensity(uint8_t intensity) {
+        params.modWheelIntensity = (intensity > 99) ? 99 : intensity;
+    }
+    
+    void setModWheelAssignment(bool pitchMod, bool ampMod, bool egBias) {
+        params.modWheelAssignment.pitchModDepth = pitchMod;
+        params.modWheelAssignment.ampModDepth = ampMod;
+        params.modWheelAssignment.egBias = egBias;
+    }
+    
+    void setMidiChannel(uint8_t channel) {
+        params.midiChannel = (channel > 16) ? 16 : channel;
+    }
+
+    void printParams() const {
+        params.print();
+    }
+
+    // Config management
+    void setFeedback(uint8_t feedback) {
+        for (auto& voice : voices) {
+            voice.setFeedback(feedback);
+        }
+    }
+
+    void setAlgorithm(const AlgorithmConfig* algorithmConfig) {
+        for (auto& voice : voices) {
+            voice.setAlgorithm(algorithmConfig);
+        }
+    }
+
+    void setOSCKeySync(bool sync) {
+        for (auto& voice : voices) {
+            voice.setOSCKeySync(sync);
+        }
+    }
+
+    // Synth configuration
     void configure(const SynthConfig* synthConfigPtr) {
-        config = synthConfigPtr;  // Pointeur const, pas de cast nécessaire
+        config = synthConfigPtr;
         lfo.configure(&config->lfoConfig);
         
         for (auto& voice : voices) {
@@ -107,23 +161,7 @@ public:
         return sample;
     }
 
-    void setFeedback(uint8_t feedback) {
-        for (auto& voice : voices) {
-            voice.setFeedback(feedback);
-        }
-    }
 
-    void setAlgorithm(const AlgorithmConfig* algorithmConfig) {
-        for (auto& voice : voices) {
-            voice.setAlgorithm(algorithmConfig);
-        }
-    }
-
-    void setOSCKeySync(bool sync) {
-        for (auto& voice : voices) {
-            voice.setOSCKeySync(sync);
-        }
-    }
 };
 
 #endif // SYNTH_H
