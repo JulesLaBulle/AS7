@@ -179,7 +179,7 @@ public:
         const float oscillatorValue = osc.process(phaseMod, pitchMod);
         const float ampModFactor = ampMod * cachedAmpModSens;
         
-        return oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor * (1.0f - ampModFactor) * OPERATOR_SCALING;
+        return oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor * (1.0f - ampModFactor);
     }
     
     // Process with feedback - ampMod passed directly
@@ -192,10 +192,10 @@ public:
         const float oscillatorValue = osc.process(phaseMod, pitchMod);
         const float gainedOutput = oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor;
         
-        previousOutput = gainedOutput * OPERATOR_SCALING;
+        previousOutput = gainedOutput;
         const float ampModFactor = ampMod * cachedAmpModSens;
 
-        return gainedOutput * (1.0f - ampModFactor) * OPERATOR_SCALING;
+        return gainedOutput * (1.0f - ampModFactor);
     }
 };
 

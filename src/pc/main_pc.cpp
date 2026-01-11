@@ -124,15 +124,15 @@ int main() {
     samples.reserve(TOTAL_SAMPLES);
     
     // Play notes
-    synth.noteOn(69, 100);
+    synth.noteOn(69, 80);
     
     for (size_t i = 0; i < TOTAL_SAMPLES; ++i) {
         if (i == static_cast<size_t>(SAMPLE_RATE * 1.0f)) {
-            synth.noteOn(72, 100);
+            synth.noteOn(72, 80);
         }
 
         if (i == static_cast<size_t>(SAMPLE_RATE * 2.0f)) {
-            synth.noteOn(76, 100);
+            synth.noteOn(76, 80);
         }
 
         // Release note after NOTE_DURATION seconds

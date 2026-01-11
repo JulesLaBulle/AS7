@@ -82,9 +82,9 @@ public:
 
             float output;
             if (config->hasFeedback && i == config->feedbackOperator) {
-                output = op->processWithFeedback(pitchMod, ampMod);
+                output = op->processWithFeedback(pitchMod, ampMod) * OPERATOR_SCALING;
             } else {
-                output = op->process(phaseMod, pitchMod, ampMod);
+                output = op->process(phaseMod, pitchMod, ampMod) * OPERATOR_SCALING;
             }
 
             modulationBuffer[i] = output;
