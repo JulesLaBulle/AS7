@@ -127,22 +127,22 @@ int main() {
     samples.reserve(TOTAL_SAMPLES);
     
     // Play notes
-    synth.noteOn(69, 80);
+    synth.noteOn(60, 80);
     
     for (size_t i = 0; i < TOTAL_SAMPLES; ++i) {
         if (i == static_cast<size_t>(SAMPLE_RATE * 1.0f)) {
-            synth.noteOn(72, 80);
+            synth.noteOn(64, 80);
         }
 
         if (i == static_cast<size_t>(SAMPLE_RATE * 2.0f)) {
-            synth.noteOn(76, 80);
+            synth.noteOn(67, 80);
         }
 
         // Release note after NOTE_DURATION seconds
         if (i == static_cast<size_t>(SAMPLE_RATE * NOTE_DURATION)) {
-            synth.noteOff(69);
-            synth.noteOff(72);
-            synth.noteOff(76);
+            synth.noteOff(60);
+            synth.noteOff(64);
+            synth.noteOff(67);
         }
 
         // Process one sample

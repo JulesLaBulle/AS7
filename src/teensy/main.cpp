@@ -9,6 +9,8 @@
 #include "../core/lut.h"
 #include "../core/sysex.h"
 
+#include "audio.h"
+
 Synth synth;
 SynthConfig config;
 SysexHandler sysex;
@@ -41,15 +43,42 @@ void setup() {
         Serial.println(sysex.getBankName());
         
         // Load preset
-        if (sysex.loadPreset(&config, 0)) {
+        if (sysex.loadPreset(&config, 10)) {
             synth.configure(&config);
         }
     }
-    
-    Serial.println(F("Ready!"));
+
     printSynthConfig(config);
+
+    // ================
+    // Initialize audio
+    // ================
+    if (!Audio::init(&synth)) {
+        Serial.println(F("ERROR: Audio initialization failed!"));
+        while (1); // Halt
+    }
+
+    Serial.println(F("Ready!"));
 }
 
 void loop() {
-    delay(100);
+    delay(1000);
+
+    synth.noteOn(60, 80); // Middle C
+    delay(1000);
+    synth.noteOn(64, 80); // E
+    delay(1000);
+    synth.noteOn(67, 80); // G
+
+    Serial.print("CPU: ");
+    Serial.print(AudioProcessorUsage());
+    Serial.println("%");
+
+    delay(5000);
+
+    synth.noteOff(60);
+    synth.noteOff(64);
+    synth.noteOff(67);
+
+    delay(1000);
 }

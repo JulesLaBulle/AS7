@@ -20,11 +20,16 @@ Modulation wheel, range, assign
 Portamento 
 
 Save user presets
-Sysex: getPresetList pour choix de preset
 
 Traitement par 64 samples ?
 
-
+Audio output
+Midi input
+Boutons
+Encoders
+Ecran
+Logique pages
+Pages provisoires
 
 Paramètres nécessitant une update:
 Feedback
