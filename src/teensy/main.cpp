@@ -10,10 +10,12 @@
 #include "../core/sysex.h"
 
 #include "audio.h"
+#include "hardware/midi.h"
 
 Synth synth;
 SynthConfig config;
 SysexHandler sysex;
+MidiHandler midi(&synth, 0); // Channel 0 (MIDI channel 1)
 
 void setup() {
     Serial.begin(115200);
@@ -43,7 +45,7 @@ void setup() {
         Serial.println(sysex.getBankName());
         
         // Load preset
-        if (sysex.loadPreset(&config, 10)) {
+        if (sysex.loadPreset(&config, 0)) {
             synth.configure(&config);
         }
     }
@@ -59,26 +61,41 @@ void setup() {
     }
 
     Serial.println(F("Ready!"));
+
+    // ================
+    // Initialize MIDI
+    // ================
+    midi.init();
+    Serial.println(F("MIDI initialized on Serial1 (RX1/pin 1)"));
 }
 
 void loop() {
-    delay(1000);
+    // Process incoming MIDI messages
+    midi.read();
 
-    synth.noteOn(60, 80); // Middle C
-    delay(1000);
-    synth.noteOn(64, 80); // E
-    delay(1000);
-    synth.noteOn(67, 80); // G
-
-    Serial.print("CPU: ");
-    Serial.print(AudioProcessorUsage());
-    Serial.println("%");
-
-    delay(5000);
-
-    synth.noteOff(60);
-    synth.noteOff(64);
-    synth.noteOff(67);
-
-    delay(1000);
+    // Monitor CPU usage periodically
+    static unsigned long lastCpuCheck = 0;
+    unsigned long now = millis();
+    if (now - lastCpuCheck >= 500) {
+        lastCpuCheck = now;
+        
+        float cpuUsage = AudioProcessorUsage();
+        float cpuUsageMax = AudioProcessorUsageMax();
+        
+        if (cpuUsage > 80.0f) {
+            Serial.print(F("CPU HIGH - Usage: "));
+            Serial.print(cpuUsage);
+            Serial.print(F("% (Max: "));
+            Serial.print(cpuUsageMax);
+            Serial.println(F("%)"));
+        }
+        
+        // Reset max for next measurement
+        if (cpuUsageMax > 90.0f) {
+            Serial.print(F("CPU CRITICAL - Max reached: "));
+            Serial.print(cpuUsageMax);
+            Serial.println(F("%"));
+            AudioProcessorUsageMaxReset();
+        }
+    }
 }

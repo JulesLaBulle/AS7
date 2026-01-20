@@ -10,7 +10,7 @@ constexpr float INV_SAMPLE_RATE = 1.0f / SAMPLE_RATE;
 constexpr float TWO_PI_F = 6.28318530718f; // 2*PI for oscillator phase calculations
 
 // Synth
-constexpr uint8_t POLYPHONY = 16;
+constexpr uint8_t POLYPHONY = 8;
 constexpr size_t NUM_OPERATORS = 6;
 constexpr float MODULATION_SCALING = 12.5f;
 

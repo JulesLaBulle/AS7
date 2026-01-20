@@ -23,8 +23,7 @@ Save user presets
 
 Traitement par 64 samples ?
 
-Audio output
-Midi input
+Midi input -> notes persistantes quand jouées rapidement
 Boutons
 Encoders
 Ecran
