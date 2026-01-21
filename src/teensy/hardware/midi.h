@@ -66,7 +66,6 @@ private:
             dataCount = 0;
             
             // Decode message type and channel
-            uint8_t msgType = byte & 0xF0;
             uint8_t msgChannel = byte & 0x0F;
             
             // Ignore messages on other channels
@@ -134,11 +133,19 @@ private:
     }
 
 public:
-    MidiHandler(Synth* synthPtr, uint8_t midiChannel = 0) 
-        : synth(synthPtr), channel(midiChannel), statusByte(0), dataCount(0) {}
+    MidiHandler() 
+        : synth(nullptr), channel(0), statusByte(0), dataCount(0) {}
     
-    // Initialize MIDI serial port
-    void init() {
+    // Initialize MIDI handler with synth reference and start serial port
+    void init(Synth* synthPtr) {
+        synth = synthPtr;
+        if (synth) {
+            // Register this handler with synth for automatic updates
+            synth->setMidiHandler(this);
+            // Get MIDI channel from synth params (convert 1-16 to 0-15)
+            uint8_t midiCh = synth->getMidiChannel();
+            channel = (midiCh > 0) ? (midiCh - 1) : 0;
+        }
         Serial1.begin(31250); // MIDI standard baud rate
     }
     
@@ -149,16 +156,12 @@ public:
         }
     }
     
-    // Set target MIDI channel (0-15)
-    void setChannel(uint8_t ch) {
-        if (ch <= 15) {
-            channel = ch;
+    // Update MIDI channel from synth params
+    void updateChannel() {
+        if (synth) {
+            uint8_t midiCh = synth->getMidiChannel();
+            channel = (midiCh > 0) ? (midiCh - 1) : 0;
         }
-    }
-    
-    // Get current target MIDI channel
-    uint8_t getChannel() const {
-        return channel;
     }
 };
 

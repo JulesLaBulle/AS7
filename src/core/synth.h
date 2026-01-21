@@ -7,6 +7,9 @@
 #include "lfo.h"
 #include "params.h"
 
+// Forward declaration
+class MidiHandler;
+
 // Polyphonic FM synthesizer
 class Synth {
 private:
@@ -18,6 +21,8 @@ private:
     LFO lfo = {};
 
     Params params = {};
+    
+    MidiHandler* midiHandler = nullptr;
 
 public:
     const SynthConfig* config = nullptr;
@@ -48,7 +53,21 @@ public:
     
     void setMidiChannel(uint8_t channel) {
         params.midiChannel = (channel > 16) ? 16 : channel;
+        // Update MidiHandler if registered
+        if (midiHandler) {
+            updateMidiHandlerChannel();
+        }
     }
+    
+    uint8_t getMidiChannel() const {
+        return params.midiChannel;
+    }
+    
+    void setMidiHandler(MidiHandler* handler) {
+        midiHandler = handler;
+    }
+    
+    void updateMidiHandlerChannel();
 
     void printParams() const {
         params.print();
@@ -172,8 +191,21 @@ public:
 
         return sample;
     }
-
-
 };
+
+// Include MidiHandler for implementation
+#ifdef PLATFORM_TEENSY
+#include "../teensy/hardware/midi.h"
+
+inline void Synth::updateMidiHandlerChannel() {
+    if (midiHandler) {
+        midiHandler->updateChannel();
+    }
+}
+#else
+inline void Synth::updateMidiHandlerChannel() {
+    // No-op on PC platform
+}
+#endif
 
 #endif // SYNTH_H

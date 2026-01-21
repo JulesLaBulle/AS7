@@ -11,17 +11,29 @@
 
 #include "audio.h"
 #include "hardware/midi.h"
+#include "hardware/lcd.h"
 
 Synth synth;
 SynthConfig config;
 SysexHandler sysex;
-MidiHandler midi(&synth, 0); // Channel 0 (MIDI channel 1)
+MidiHandler midi;
+LcdDisplay lcd;
 
 void setup() {
     Serial.begin(115200);
     while (!Serial && millis() < 3000); // Wait for Serial or 3s timeout
 
     Serial.println(F("AS7 Program Starting..."));
+
+    // ===============
+    // Initialize LCD
+    // ===============
+    if (!lcd.init()) {
+        Serial.println(F("ERROR: LCD initialization failed!"));
+    } else {
+        lcd.showTestScreen();
+    }
+    Serial.println(F("LCD initialized successfully."));
 
     // ==================
     // Initialize SD card
@@ -35,7 +47,7 @@ void setup() {
     // ======================
     // Initialize synthesizer
     // ======================
-    Serial.println(F("AS7 Initializing..."));
+    Serial.println(F("AS7 Core Initializing..."));
     LUT::init();
     synth.initParams();
     
@@ -45,12 +57,12 @@ void setup() {
         Serial.println(sysex.getBankName());
         
         // Load preset
-        if (sysex.loadPreset(&config, 0)) {
+        if (sysex.loadPreset(&config, 10)) {
             synth.configure(&config);
+            Serial.println(F("Core initialized successfully."));
         }
     }
-
-    printSynthConfig(config);
+    // printSynthConfig(config);
 
     // ================
     // Initialize audio
@@ -59,14 +71,16 @@ void setup() {
         Serial.println(F("ERROR: Audio initialization failed!"));
         while (1); // Halt
     }
-
-    Serial.println(F("Ready!"));
+    Serial.println(F("Audio initialized successfully."));
 
     // ================
     // Initialize MIDI
     // ================
-    midi.init();
+    midi.init(&synth);
+    #ifdef DEBUG_TEENSY
     Serial.println(F("MIDI initialized on Serial1 (RX1/pin 1)"));
+    Serial.println(F("READY!"));
+    #endif
 }
 
 void loop() {
