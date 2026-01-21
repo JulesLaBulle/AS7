@@ -2,13 +2,13 @@
 #define AUDIO_H
 
 #include <Audio.h>
-#include "../core/synth.h"
+#include "../../core/synth.h"
 
 // Audio output stream - generates samples from synthesizer
 class AudioOutput : public AudioStream {
 private:
     Synth* synth;
-    float volume = 0.8f;
+    float volume = 0.9f;
 
 public:
     AudioOutput(Synth* synthPtr) : AudioStream(0, nullptr), synth(synthPtr) {}
