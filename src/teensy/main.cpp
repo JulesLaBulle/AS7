@@ -8,6 +8,7 @@
 #include "../core/config.h"
 #include "../core/lut.h"
 #include "../core/sysex.h"
+#include "../core/user_presets.h"
 
 #include "hardware/audio.h"
 #include "hardware/midi.h"
@@ -19,6 +20,7 @@
 Synth synth;
 SynthConfig config;
 SysexHandler sysex;
+UserPresetsHandler userPresets;
 MidiHandler midi;
 LcdDisplay lcd;
 ButtonsHandler buttons;
@@ -64,9 +66,19 @@ void setup() {
         // Load preset
         if (sysex.loadPreset(&config, 10)) {
             synth.configure(&config);
-            Serial.println(F("Core initialized successfully."));
         }
     }
+    
+    // Load user presets bank (scan directory)
+    if (userPresets.loadUserBank()) {
+        Serial.print(F("User presets loaded: "));
+        Serial.print(userPresets.getPresetCount());
+        Serial.println(F(" presets found"));
+    } else {
+        Serial.println(F("No user presets found (directory may be empty)"));
+    }
+    
+    Serial.println(F("Core initialized successfully."));
 
     // ================
     // Initialize audio
@@ -121,6 +133,10 @@ void setup() {
     
     Serial.println(F("UI initialized successfully."));
     Serial.println(F("READY!"));
+
+    if (userPresets.loadPreset(&config, 0)) {
+        synth.configure(&config);
+    }
 }
 
 void loop() {
