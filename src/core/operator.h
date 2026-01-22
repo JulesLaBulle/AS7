@@ -176,7 +176,7 @@ public:
         if (!isOn) return 0.0f;
         
         const float envelopeLevel = env.process();
-        const float oscillatorValue = osc.process(phaseMod, pitchMod);
+        const float oscillatorValue = osc.process(phaseMod, pitchMod, config->waveform);
         const float ampModFactor = ampMod * cachedAmpModSens;
         
         return oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor * (1.0f - ampModFactor);
@@ -189,7 +189,7 @@ public:
         const float envelopeLevel = env.process();
         
         const float phaseMod = feedbackLevel * previousOutput * FEEDBACK_SCALING;
-        const float oscillatorValue = osc.process(phaseMod, pitchMod);
+        const float oscillatorValue = osc.process(phaseMod, pitchMod, config->waveform);
         const float gainedOutput = oscillatorValue * envelopeLevel * velocityFactor * levelScalingFactor;
         
         previousOutput = gainedOutput;

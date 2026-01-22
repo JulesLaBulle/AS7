@@ -60,9 +60,9 @@ public:
         if (waveform == 0) {
             value = LUT::triangle(phase);
         } else if (waveform == 1) {
-            value = -LUT::saw(phase);
-        } else if (waveform == 2) {
             value = LUT::saw(phase);
+        } else if (waveform == 2) {
+            value = -LUT::saw(phase);
         } else if (waveform == 3) {
             value = LUT::square(phase);
         } else if (waveform == 4) {

@@ -61,11 +61,12 @@ struct OperatorConfig {
     uint8_t lvlSclRightCurve = 0;
 
     bool OSCKeySync = false;            // If true, oscillator restarts on new note
+    uint8_t waveform = 0;               // 0=sine, 1=triangle, 2=saw down, 3=saw up, 4=square (default 0 for DX7 compatibility)
 
     OperatorConfig(bool OPon = true, FrequencyConfig freq = FrequencyConfig(), EnvelopeConfig env = EnvelopeConfig(), uint8_t vel = 0, uint8_t ams = 0,
-                   uint8_t lscBP = 0, uint8_t lscLD = 0, uint8_t lscRD = 0, uint8_t lscLC = 0, uint8_t lscRC = 0, bool oscks = false) 
+                   uint8_t lscBP = 0, uint8_t lscLD = 0, uint8_t lscRD = 0, uint8_t lscLC = 0, uint8_t lscRC = 0, bool oscks = false, uint8_t wf = 0) 
         : on(OPon), frequency(freq), envelope(env), velocitySensitivity(vel), ampModSens(ams),
-        lvlSclBreakpoint(lscBP), lvlSclLeftDepth(lscLD), lvlSclRightDepth(lscRD), lvlSclLeftCurve(lscLC), lvlSclRightCurve(lscRC), OSCKeySync(oscks) {}
+        lvlSclBreakpoint(lscBP), lvlSclLeftDepth(lscLD), lvlSclRightDepth(lscRD), lvlSclLeftCurve(lscLC), lvlSclRightCurve(lscRC), OSCKeySync(oscks), waveform(wf) {}
 };
 
 struct AlgorithmConfig {
