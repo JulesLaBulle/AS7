@@ -2,7 +2,6 @@ PROBLEMES IDENTIFIES:
 Detune ?
 
 
-
 Presets défectueux:
 7 trop d'harmoniques (fb)
 9 attaque trop forte (c ok en vrai)
@@ -12,14 +11,14 @@ Presets défectueux:
 ...
 
 
-
-A faire: 
-Parameters (implémentation dans le processing audio)
-Pitch bend, range
-Modulation wheel, range, assign
+TODOS CORE: 
+Pitch bend (structure existe mais non implémentée)
+Modulation wheel (structure existe mais non implémentée)
+Formes d'onde oscillateur (actuellement sinus uniquement)
+Sauvegarde de presets utilisateur
 Portamento 
 
-Save user presets
+
 
 Traitement par 64 samples ?
 
@@ -29,6 +28,9 @@ Encoders
 Ecran
 Logique pages
 Pages provisoires
+
+
+
 
 Paramètres nécessitant une update:
 Feedback

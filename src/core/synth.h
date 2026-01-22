@@ -25,7 +25,7 @@ private:
     MidiHandler* midiHandler = nullptr;
 
 public:
-    const SynthConfig* config = nullptr;
+    SynthConfig* config = nullptr;  // Non-const since synth can modify it via setters
     Synth() = default;
     
     // Parameters management
@@ -75,12 +75,18 @@ public:
 
     // Config management
     void setFeedback(uint8_t feedback) {
+        if (config) {
+            config->voiceConfig.feedback = feedback;
+        }
         for (auto& voice : voices) {
             voice.setFeedback(feedback);
         }
     }
 
     void setAlgorithm(const AlgorithmConfig* algorithmConfig) {
+        if (config) {
+            config->voiceConfig.algorithm = algorithmConfig;
+        }
         for (auto& voice : voices) {
             voice.setAlgorithm(algorithmConfig);
         }
@@ -93,7 +99,7 @@ public:
     }
 
     // Synth configuration
-    void configure(const SynthConfig* synthConfigPtr) {
+    void configure(SynthConfig* synthConfigPtr) {
         config = synthConfigPtr;
         lfo.configure(&config->lfoConfig);
         

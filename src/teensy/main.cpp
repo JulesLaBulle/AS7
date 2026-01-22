@@ -14,6 +14,7 @@
 #include "hardware/lcd.h"
 #include "hardware/buttons.h"
 #include "hardware/encoders.h"
+#include "ui/ui_manager.h"
 
 Synth synth;
 SynthConfig config;
@@ -22,6 +23,7 @@ MidiHandler midi;
 LcdDisplay lcd;
 ButtonsHandler buttons;
 EncodersHandler encoders;
+UIManager* uiManager = nullptr;  // Sera créé dans setup()
 
 void setup() {
     Serial.begin(115200);
@@ -35,8 +37,6 @@ void setup() {
     if (!lcd.init()) {
         Serial.println(F("ERROR: LCD initialization failed!"));
         while (1); // Halt
-    } else {
-        lcd.showTestScreen();
     }
     Serial.println(F("LCD initialized successfully."));
 
@@ -95,6 +95,31 @@ void setup() {
     encoders.init();
     Serial.println(F("Encoders initialized (8 encoders via CD4051)"));
     
+    // =============
+    // Initialize UI
+    // =============
+    uiManager = new UIManager(&lcd, &config, &synth);
+    uiManager->init();
+
+    buttons.setCallback([](uint8_t buttonIndex, bool pressed) {
+        if (pressed && uiManager) {
+            uiManager->onButtonPress(buttonIndex);
+        }
+    });
+    
+    encoders.setRotationCallback([](uint8_t encoderIndex, int8_t direction) {
+        if (uiManager) {
+            uiManager->onEncoderRotation(encoderIndex, direction);
+        }
+    });
+    
+    encoders.setButtonCallback([](uint8_t encoderIndex, bool pressed) {
+        if (pressed && uiManager) {
+            uiManager->onEncoderButtonPress(encoderIndex);
+        }
+    });
+    
+    Serial.println(F("UI initialized successfully."));
     Serial.println(F("READY!"));
 }
 
@@ -102,6 +127,11 @@ void loop() {
     midi.read();
     buttons.read();
     encoders.read();
+    
+    // Update UI
+    if (uiManager) {
+        uiManager->update();
+    }
 
     #ifdef DEBUG_TEENSY
     // Monitor CPU usage periodically
