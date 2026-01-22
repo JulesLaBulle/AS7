@@ -161,11 +161,12 @@ public:
             return;
         }
 
+        // Turn off ALL voices playing this note (not just the first one)
         for (auto& voice : voices) {
             if (voice.isActive() && voice.getCurrentMidiNote() == midiNote) {
                 voice.noteOff();
                 --activeNoteCount;
-                return;
+                // Don't return here - continue checking all voices
             }
         }
     }

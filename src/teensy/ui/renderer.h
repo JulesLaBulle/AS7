@@ -78,9 +78,6 @@ public:
     void drawHeader(const char* title, const char* subtitle = nullptr) {
         tft->fillRect(0, HEADER_Y, SCREEN_WIDTH, HEADER_HEIGHT, COLOR_HEADER_BG);
         
-        // Draw header border
-        tft->drawRect(0, HEADER_Y, SCREEN_WIDTH, HEADER_HEIGHT, COLOR_TEXT_DIM);
-        
         // Main title (centered horizontally and vertically)
         tft->setTextColor(COLOR_HEADER_TEXT);
         tft->setTextSize(3);
@@ -182,9 +179,6 @@ public:
         uint16_t y = CONTENT_Y + (row * WIDGET_HEIGHT);
         uint16_t w = WIDGET_WIDTH * widget.spanCols;
         uint16_t h = WIDGET_HEIGHT * widget.spanRows;
-        
-        // Draw border
-        tft->drawRect(x, y, w, h, COLOR_TEXT_DIM);
         
         // Draw label (if present)
         if (widget.label && widget.label[0] != '\0') {
