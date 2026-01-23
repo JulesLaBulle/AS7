@@ -31,6 +31,9 @@ private:
     
     // Track if a bank is loaded
     bool bankLoaded = false;
+    
+    // List of available banks (without extension)
+    std::vector<std::string> availableBanks;
 
     // Extracts filename from path
     std::string extractFilename(const std::string& path) {
@@ -479,6 +482,12 @@ public:
         return bankLoaded;
     }
     
+    // Unload current bank (called when loading USER presets)
+    void unloadBank() {
+        bankLoaded = false;
+        bankName.clear();
+    }
+    
     // Get raw parameters for a specific preset.
     const std::array<uint8_t, 155>& getRawPreset(uint8_t presetIndex) const {
         static const std::array<uint8_t, 155> empty = {};
@@ -486,6 +495,75 @@ public:
             return empty;
         }
         return bankParams[presetIndex];
+    }
+    
+    // List all available .syx banks in /presets directory
+    bool listBanks() {
+        availableBanks.clear();
+        
+        #ifdef PLATFORM_TEENSY
+        // Teensy: List SD card directory
+        File dir = SD.open("/presets");
+        if (!dir) {
+            #ifdef DEBUG_TEENSY
+            Serial.println(F("Error: Could not open /presets directory"));
+            #endif
+            return false;
+        }
+        
+        File entry;
+        while ((entry = dir.openNextFile())) {
+            if (!entry.isDirectory()) {
+                const char* name = entry.name();
+                size_t len = strlen(name);
+                
+                // Check if ends with .syx
+                if (len > 4 && strcmp(name + len - 4, ".syx") == 0) {
+                    // Extract filename without extension
+                    std::string filename(name, len - 4);
+                    availableBanks.push_back(filename);
+                }
+            }
+            entry.close();
+        }
+        dir.close();
+        
+        #else
+        // PC: List filesystem directory
+        if (!std::filesystem::exists("/presets")) {
+            #ifdef DEBUG_PC
+            std::cerr << "Error: /presets directory does not exist" << std::endl;
+            #endif
+            return false;
+        }
+        
+        for (const auto& entry : std::filesystem::directory_iterator("/presets")) {
+            if (entry.is_regular_file() && entry.path().extension() == ".syx") {
+                availableBanks.push_back(entry.path().stem().string());
+            }
+        }
+        #endif
+        
+        #ifdef DEBUG_PC
+        std::cout << "Found " << availableBanks.size() << " .syx banks" << std::endl;
+        #endif
+        #ifdef DEBUG_TEENSY
+        Serial.print(F("Found "));
+        Serial.print(availableBanks.size());
+        Serial.println(F(" .syx banks"));
+        #endif
+        
+        return true;
+    }
+    
+    // Get list of available banks
+    const std::vector<std::string>& getBanksList() const {
+        return availableBanks;
+    }
+    
+    // Get number of available banks
+    size_t getBanksCount() const {
+        return availableBanks.size();
     }
 };
 

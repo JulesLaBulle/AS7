@@ -8,9 +8,13 @@
 #include "pages/page_algorithm.h"
 #include "pages/page_lfo.h"
 #include "pages/page_pitch_env.h"
+#include "pages/page_bank.h"
+#include "pages/page_preset.h"
 #include "../hardware/lcd.h"
 #include "../../core/config.h"
 #include "../../core/synth.h"
+#include "../../core/sysex.h"
+#include "../../core/user_presets.h"
 
 // UI Manager - Orchestrates the user interface
 // Handles page navigation, routes hardware events to active page, manages transitions
@@ -61,6 +65,8 @@ private:
     LcdDisplay* lcd;
     SynthConfig* config;
     Synth* synth;
+    SysexHandler* sysex;
+    UserPresetsHandler* userPresets;
     
     Renderer* renderer;
     
@@ -74,8 +80,9 @@ private:
     static constexpr unsigned long UPDATE_INTERVAL_MS = 50;  // 20 FPS
     
 public:
-    UIManager(LcdDisplay* lcdDisplay, SynthConfig* cfg, Synth* syn)
-        : lcd(lcdDisplay), config(cfg), synth(syn), 
+    UIManager(LcdDisplay* lcdDisplay, SynthConfig* cfg, Synth* syn, 
+              SysexHandler* sx, UserPresetsHandler* up)
+        : lcd(lcdDisplay), config(cfg), synth(syn), sysex(sx), userPresets(up),
           currentPageType(PageType::ALGORITHM), currentPage(nullptr),
           lastUpdateTime(0) {
         
@@ -97,10 +104,16 @@ public:
     void init() {
         renderer->clearScreen();
         
+        // Scan for available banks
+        sysex->listBanks();
+        userPresets->loadUserBank();
+        
         // Register pages
         registerPage(PageType::ALGORITHM, new PageAlgorithm(config, synth, renderer));
         registerPage(PageType::LFO, new PageLFO(config, synth, renderer));
         registerPage(PageType::PITCH_ENV, new PagePitchEnv(config, synth, renderer));
+        registerPage(PageType::BANK, new PageBank(config, synth, renderer, sysex, userPresets));
+        registerPage(PageType::PRESET, new PagePreset(config, synth, renderer, sysex, userPresets));
         
         navigateTo(PageType::ALGORITHM);
         
@@ -193,7 +206,22 @@ public:
     void onButtonPress(uint8_t buttonIndex) {
         // Let page handle button first (important for Save page and special cases)
         if (currentPage && currentPage->handleButton(buttonIndex)) {
-            return;  // Page handled it, don't do default navigation
+            // Page handled it - check for navigation request
+            if (currentPageType == PageType::BANK) {
+                // Bank page loaded a bank, navigate to Preset page
+                PageBank* bankPage = static_cast<PageBank*>(currentPage);
+                PagePreset* presetPage = static_cast<PagePreset*>(pages[static_cast<size_t>(PageType::PRESET)]);
+                if (presetPage) {
+                    presetPage->setBankType(bankPage->isUserBankLoaded());
+                }
+                navigateTo(PageType::PRESET);
+                return;
+            } else if (currentPageType == PageType::PRESET) {
+                // Preset page loaded a preset, navigate back to Algorithm
+                navigateTo(PageType::ALGORITHM);
+                return;
+            }
+            return;  // Page handled it, no navigation
         }
         
         // Default navigation behavior
@@ -214,8 +242,23 @@ public:
     
     // Callback for encoder button press (called from EncodersHandler)
     void onEncoderButtonPress(uint8_t encoderIndex) {
-        if (currentPage) {
-            currentPage->handleButton(ENCODER_BUTTON_OFFSET + encoderIndex);
+        if (currentPage && currentPage->handleButton(ENCODER_BUTTON_OFFSET + encoderIndex)) {
+            // Page handled it - check for navigation request
+            if (currentPageType == PageType::BANK) {
+                // Bank page loaded a bank, navigate to Preset page
+                PageBank* bankPage = static_cast<PageBank*>(currentPage);
+                PagePreset* presetPage = static_cast<PagePreset*>(pages[static_cast<size_t>(PageType::PRESET)]);
+                if (presetPage) {
+                    presetPage->setBankType(bankPage->isUserBankLoaded());
+                }
+                navigateTo(PageType::PRESET);
+                return;
+            } else if (currentPageType == PageType::PRESET) {
+                // Preset page loaded a preset, navigate back to Algorithm
+                // navigateTo(PageType::ALGORITHM);
+                return;
+            }
+            return;  // Page handled it, no navigation
         }
     }
     

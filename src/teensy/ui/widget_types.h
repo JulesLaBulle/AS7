@@ -7,14 +7,13 @@
 enum class WidgetType : uint8_t {
     KNOB,                    // Rotary knob (most common)
     TOGGLE,                  // ON/OFF switch
-    SELECTOR,                // Multi-position selector (ratio/fixed, curves, etc.)
     WAVEFORM_LFO,           // LFO waveform preview
     WAVEFORM_LEVEL_SCALING, // Level scaling curve preview
     WAVEFORM_OSC,           // Oscillator waveform preview
     ALGORITHM_DIAGRAM,      // Algorithm routing diagram (special for algorithm page)
     LIST,                   // Scrollable list (for bank/preset pages)
     TEXT_DISPLAY,           // Simple text/number display
-    LARGE_VALUE             // Large centered value (for preset selection)
+    LARGE_VALUE             // Large centered value (for numbers, algorithm selection, etc.)
 };
 
 // Widget descriptor - describes a parameter and its visual representation

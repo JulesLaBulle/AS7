@@ -58,24 +58,16 @@ void setup() {
     LUT::init();
     synth.initParams();
     
-    // Load bank from SD
+    // Load ROM1A bank and first preset
     if (sysex.loadBank("/presets/ROM1A_Master.syx")) {
         Serial.print(F("Bank loaded: "));
         Serial.println(sysex.getBankName());
         
-        // Load preset
-        if (sysex.loadPreset(&config, 10)) {
+        // Load first preset
+        if (sysex.loadPreset(&config, 0)) {
             synth.configure(&config);
+            Serial.println(F("Loaded preset 0 from ROM1A"));
         }
-    }
-    
-    // Load user presets bank (scan directory)
-    if (userPresets.loadUserBank()) {
-        Serial.print(F("User presets loaded: "));
-        Serial.print(userPresets.getPresetCount());
-        Serial.println(F(" presets found"));
-    } else {
-        Serial.println(F("No user presets found (directory may be empty)"));
     }
     
     Serial.println(F("Core initialized successfully."));
@@ -110,7 +102,7 @@ void setup() {
     // =============
     // Initialize UI
     // =============
-    uiManager = new UIManager(&lcd, &config, &synth);
+    uiManager = new UIManager(&lcd, &config, &synth, &sysex, &userPresets);
     uiManager->init();
 
     buttons.setCallback([](uint8_t buttonIndex, bool pressed) {
@@ -133,10 +125,6 @@ void setup() {
     
     Serial.println(F("UI initialized successfully."));
     Serial.println(F("READY!"));
-
-    if (userPresets.loadPreset(&config, 0)) {
-        synth.configure(&config);
-    }
 }
 
 void loop() {

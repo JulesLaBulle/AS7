@@ -621,6 +621,12 @@ public:
         
         return false;
     }
+    
+    // Unload user bank (called when loading ROM bank)
+    void unloadUserBank() {
+        presetsLoaded = false;
+        presetNames.clear();
+    }
 };
 
 #endif // USER_PRESETS_H

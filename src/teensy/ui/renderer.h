@@ -229,8 +229,10 @@ private:
     void drawWidgetValue(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const WidgetDescriptor& widget) {
         switch (widget.type) {
             case WidgetType::KNOB:
-            case WidgetType::SELECTOR:
                 drawKnobValue(x, y, w, h, widget);
+                break;
+            case WidgetType::LARGE_VALUE:
+                drawLargeValue(x, y, w, h, widget);
                 break;
             case WidgetType::TOGGLE:
                 drawToggleValue(x, y, w, h, widget);
@@ -260,6 +262,23 @@ private:
         snprintf(buffer, sizeof(buffer), "%d", value);
         
         // Center value
+        int16_t textWidth = strlen(buffer) * 24;  // 24px per char @ size 4
+        tft->setCursor(x + (w - textWidth) / 2, y + (h - 28) / 2);
+        tft->print(value);
+    }
+    
+    void drawLargeValue(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const WidgetDescriptor& widget) {
+        if (!widget.valuePtr) return;
+        
+        uint8_t value = *(static_cast<uint8_t*>(widget.valuePtr));
+        
+        tft->setTextColor(COLOR_VALUE);
+        tft->setTextSize(4);
+        
+        char buffer[8];
+        snprintf(buffer, sizeof(buffer), "%d", value);
+        
+        // Center value (same as KNOB for consistency)
         int16_t textWidth = strlen(buffer) * 24;  // 24px per char @ size 4
         tft->setCursor(x + (w - textWidth) / 2, y + (h - 28) / 2);
         tft->print(value);
@@ -299,61 +318,148 @@ private:
     
 public:
     // ==================
-    // LEGACY METHODS (kept for compatibility, can be phased out)
+    // LIST RENDERING (for Bank/Preset pages)
     // ==================
-    
-    // Display large centered value (useful for preset/bank selection)
-    void drawLargeValue(int16_t value) {
-        tft->setTextColor(COLOR_ACCENT);
-        tft->setTextSize(6);
-        
-        char buffer[8];
-        snprintf(buffer, sizeof(buffer), "%d", value);
-        
-        int16_t x = (SCREEN_WIDTH - strlen(buffer) * 36) / 2;  // 36px per char @ size 6
-        int16_t y = CONTENT_Y + (CONTENT_HEIGHT / 2) - 30;
-        
-        tft->setCursor(x, y);
-        tft->print(buffer);
-    }
-    
-    // Display centered text (useful for preset/bank name)
-    void drawCenteredText(const char* text, uint16_t offsetY = 0) {
-        tft->setTextColor(COLOR_TEXT);
-        tft->setTextSize(2);
-        
-        int16_t x = (SCREEN_WIDTH - strlen(text) * 12) / 2;
-        int16_t y = CONTENT_Y + (CONTENT_HEIGHT / 2) + offsetY;
-        
-        tft->setCursor(x, y);
-        tft->print(text);
-    }
     
     // Display scrollable list (for Bank/Preset pages)
     // @param items: Array of strings to display
     // @param itemCount: Total number of items
-    // @param selectedIndex: Index of highlighted item
+    // @param selectedIndex: Index of currently highlighted item (for navigation)
+    // @param loadedIndex: Index of currently loaded item (shown with border)
     // @param startIndex: Index of first visible item (for scrolling)
-    void drawList(const char* items[], uint8_t itemCount, uint8_t selectedIndex, uint8_t startIndex) {
-        uint8_t visibleItems = 8;  // 8 items max visible (260px / 32px)
+    void drawScrollableList(const char* items[], uint8_t itemCount, uint8_t selectedIndex, 
+                           uint8_t loadedIndex, uint8_t startIndex) {
+        if (itemCount == 0) return;  // Safety check
         
-        for (uint8_t i = 0; i < visibleItems && (startIndex + i) < itemCount; i++) {
+        uint8_t visibleItems = 7;  // 7 items visible (leaving room for instruction text)
+        uint16_t listY = CONTENT_Y + 40;  // Start below instruction text
+        uint16_t itemHeight = 30;
+        
+        // Clamp startIndex to valid range
+        if (startIndex >= itemCount) {
+            startIndex = (itemCount > 0) ? itemCount - 1 : 0;
+        }
+        
+        for (uint8_t i = 0; i < visibleItems; i++) {
             uint8_t itemIndex = startIndex + i;
-            uint16_t y = CONTENT_Y + 4 + (i * 32);
+            if (itemIndex >= itemCount) break;  // Stop if we run out of items
             
-            // Highlight selected item
+            uint16_t y = listY + (i * itemHeight);
+            
+            // Clear area first
+            tft->fillRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_BG);
+            
+            // Draw border for loaded item (only visible when not selected)
+            if (itemIndex == loadedIndex && itemIndex != selectedIndex) {
+                tft->drawRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_ACCENT);
+            }
+            
+            // Inverted colors for selected item (centered)
             if (itemIndex == selectedIndex) {
-                tft->fillRect(0, y, SCREEN_WIDTH, 30, COLOR_HEADER_BG);
-                tft->setTextColor(COLOR_ACCENT);
+                // Fill background with text color, draw text in background color
+                tft->fillRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_VALUE);
+                tft->setTextColor(COLOR_BG);
             } else {
                 tft->setTextColor(COLOR_TEXT);
             }
             
             tft->setTextSize(2);
-            tft->setCursor(10, y + 5);
+            tft->setCursor(10, y + 7);
             tft->print(items[itemIndex]);
         }
     }
+    
+    // Optimized incremental update for scrollable list - only redraws changed items
+    // @param oldSelectedIndex: Previously selected index
+    // @param oldScrollOffset: Previous scroll offset
+    // Much faster for scrolling as it only updates 1-2 items instead of redrawing everything
+    void updateScrollableListIncremental(const char* items[], uint8_t itemCount, 
+                                         uint8_t oldSelectedIndex, uint8_t selectedIndex,
+                                         uint8_t loadedIndex, uint8_t oldScrollOffset, 
+                                         uint8_t scrollOffset) {
+        if (itemCount == 0) return;  // Safety check
+        
+        uint8_t visibleItems = 7;
+        uint16_t listY = CONTENT_Y + 40;
+        uint16_t itemHeight = 30;
+        
+        // Clamp scroll offsets
+        if (oldScrollOffset >= itemCount) oldScrollOffset = (itemCount > 0) ? itemCount - 1 : 0;
+        if (scrollOffset >= itemCount) scrollOffset = (itemCount > 0) ? itemCount - 1 : 0;
+        
+        // If scroll offset changed, need full redraw
+        if (oldScrollOffset != scrollOffset) {
+            // Full list redraw (but not header/instruction)
+            for (uint8_t i = 0; i < visibleItems; i++) {
+                uint8_t itemIndex = scrollOffset + i;
+                if (itemIndex >= itemCount) break;  // Stop if we run out of items
+                
+                uint16_t y = listY + (i * itemHeight);
+                
+                tft->fillRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_BG);
+                
+                if (itemIndex == loadedIndex && itemIndex != selectedIndex) {
+                    tft->drawRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_ACCENT);
+                }
+                
+                if (itemIndex == selectedIndex) {
+                    tft->fillRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_VALUE);
+                    tft->setTextColor(COLOR_BG);
+                } else {
+                    tft->setTextColor(COLOR_TEXT);
+                }
+                
+                tft->setTextSize(2);
+                tft->setCursor(10, y + 7);
+                tft->print(items[itemIndex]);
+            }
+            return;
+        }
+        
+        // Only selection changed, no scroll - redraw only 2 items (old and new selection)
+        // Find position of old selected item in visible range
+        if (oldSelectedIndex < itemCount && oldSelectedIndex >= scrollOffset && oldSelectedIndex < scrollOffset + visibleItems) {
+            uint8_t visiblePos = oldSelectedIndex - scrollOffset;
+            uint16_t y = listY + (visiblePos * itemHeight);
+            
+            tft->fillRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_BG);
+            
+            // Redraw with normal colors (and border if loaded)
+            if (oldSelectedIndex == loadedIndex) {
+                tft->drawRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_ACCENT);
+            }
+            
+            tft->setTextColor(COLOR_TEXT);
+            tft->setTextSize(2);
+            tft->setCursor(10, y + 7);
+            tft->print(items[oldSelectedIndex]);
+        }
+        
+        // Draw new selected item
+        if (selectedIndex < itemCount && selectedIndex >= scrollOffset && selectedIndex < scrollOffset + visibleItems) {
+            uint8_t visiblePos = selectedIndex - scrollOffset;
+            uint16_t y = listY + (visiblePos * itemHeight);
+            
+            tft->fillRect(5, y, SCREEN_WIDTH - 10, itemHeight - 2, COLOR_VALUE);
+            tft->setTextColor(COLOR_BG);
+            tft->setTextSize(2);
+            tft->setCursor(10, y + 7);
+            tft->print(items[selectedIndex]);
+        }
+    }
+    
+    // Draw instruction text at top of content area
+    void drawInstructionText(const char* text) {
+        tft->setTextColor(COLOR_TEXT_DIM);
+        tft->setTextSize(2);  // Size 2 for better readability
+        uint16_t x = (SCREEN_WIDTH - strlen(text) * 12) / 2;  // 12px per char @ size 2
+        tft->setCursor(x, CONTENT_Y + 10);
+        tft->print(text);
+    }
+    
+    // ==================
+    // UTILITY METHODS
+    // ==================
     
     // Get X position of column center
     uint16_t getColumnCenterX(uint8_t column) const {
