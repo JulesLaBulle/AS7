@@ -30,7 +30,7 @@ private:
     uint8_t oldScrollOffset;               // Previous scroll offset
     bool headerDrawn;                      // Track if header/instruction drawn
     
-    static constexpr uint8_t VISIBLE_ITEMS = 7;
+    static constexpr uint8_t VISIBLE_ITEMS = 8;
     
     void refreshPresetList() {
         presetNames.clear();
@@ -59,22 +59,30 @@ private:
     }
     
     void updateScrollOffset() {
-        // Keep selected item visible and centered when possible
-        if (selectedIndex < scrollOffset) {
-            scrollOffset = selectedIndex;
-        } else if (selectedIndex >= scrollOffset + VISIBLE_ITEMS) {
-            scrollOffset = selectedIndex - VISIBLE_ITEMS + 1;
+        // Safety check
+        if (presetNames.empty()) {
+            scrollOffset = 0;
+            return;
         }
         
-        // Center selected item when possible
-        if (presetNames.size() > VISIBLE_ITEMS) {
-            int16_t centerOffset = selectedIndex - VISIBLE_ITEMS / 2;
-            if (centerOffset < 0) centerOffset = 0;
-            if (centerOffset + VISIBLE_ITEMS > presetNames.size()) {
-                centerOffset = presetNames.size() - VISIBLE_ITEMS;
-            }
-            scrollOffset = static_cast<uint8_t>(centerOffset);
+        // If list is shorter than visible items, always start at 0
+        if (presetNames.size() <= VISIBLE_ITEMS) {
+            scrollOffset = 0;
+            return;
         }
+        
+        // Block scrolling: show 8 items at a time
+        // Calculate which block the selected item is in
+        uint8_t blockIndex = selectedIndex / VISIBLE_ITEMS;
+        uint8_t newScrollOffset = blockIndex * VISIBLE_ITEMS;
+        
+        // Clamp to valid range
+        int16_t maxOffset = static_cast<int16_t>(presetNames.size()) - VISIBLE_ITEMS;
+        if (newScrollOffset > maxOffset) {
+            newScrollOffset = static_cast<uint8_t>(maxOffset);
+        }
+        
+        scrollOffset = newScrollOffset;
     }
     
 public:

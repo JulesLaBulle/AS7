@@ -31,8 +31,8 @@ private:
     static constexpr uint16_t SCREEN_WIDTH = 480;
     static constexpr uint16_t SCREEN_HEIGHT = 320;
     
-    static constexpr uint16_t HEADER_HEIGHT = 60;
-    static constexpr uint16_t CONTENT_HEIGHT = SCREEN_HEIGHT - HEADER_HEIGHT;  // 260px
+    static constexpr uint16_t HEADER_HEIGHT = 50;  // Reduced from 60 to 50
+    static constexpr uint16_t CONTENT_HEIGHT = SCREEN_HEIGHT - HEADER_HEIGHT;  // 270px
     
     static constexpr uint16_t HEADER_Y = 0;
     static constexpr uint16_t CONTENT_Y = HEADER_HEIGHT;
@@ -87,7 +87,7 @@ public:
         
         if (subtitle) {
             // If subtitle exists, position title higher
-            y = HEADER_Y + (HEADER_HEIGHT - titleHeight - 24) / 2;  // Leave room for subtitle
+            y = HEADER_Y + (HEADER_HEIGHT - titleHeight - 20) / 2;  // Reduced spacing
         } else {
             // Center vertically in header
             y = HEADER_Y + (HEADER_HEIGHT - titleHeight) / 2;
@@ -331,8 +331,8 @@ public:
                            uint8_t loadedIndex, uint8_t startIndex) {
         if (itemCount == 0) return;  // Safety check
         
-        uint8_t visibleItems = 7;  // 7 items visible (leaving room for instruction text)
-        uint16_t listY = CONTENT_Y + 40;  // Start below instruction text
+        uint8_t visibleItems = 8;  // 8 items visible
+        uint16_t listY = CONTENT_Y + 30;  // Start below instruction text (reduced margin)
         uint16_t itemHeight = 30;
         
         // Clamp startIndex to valid range
@@ -379,8 +379,8 @@ public:
                                          uint8_t scrollOffset) {
         if (itemCount == 0) return;  // Safety check
         
-        uint8_t visibleItems = 7;
-        uint16_t listY = CONTENT_Y + 40;
+        uint8_t visibleItems = 8;
+        uint16_t listY = CONTENT_Y + 30;  // Reduced margin
         uint16_t itemHeight = 30;
         
         // Clamp scroll offsets
@@ -453,7 +453,7 @@ public:
         tft->setTextColor(COLOR_TEXT_DIM);
         tft->setTextSize(2);  // Size 2 for better readability
         uint16_t x = (SCREEN_WIDTH - strlen(text) * 12) / 2;  // 12px per char @ size 2
-        tft->setCursor(x, CONTENT_Y + 10);
+        tft->setCursor(x, CONTENT_Y + 5);  // Reduced top margin (was 10)
         tft->print(text);
     }
     

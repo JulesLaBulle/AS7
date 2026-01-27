@@ -28,7 +28,7 @@ private:
     uint8_t oldScrollOffset;             // Previous scroll offset
     bool headerDrawn;                    // Track if header/instruction drawn
     
-    static constexpr uint8_t VISIBLE_ITEMS = 7;
+    static constexpr uint8_t VISIBLE_ITEMS = 8;
     
     void refreshBankList() {
         bankNames.clear();
@@ -56,20 +56,18 @@ private:
             return;
         }
         
-        // Center selected item when possible (only for longer lists)
-        int16_t centerOffset = static_cast<int16_t>(selectedIndex) - (VISIBLE_ITEMS / 2);
+        // Block scrolling: show 8 items at a time
+        // Calculate which block the selected item is in
+        uint8_t blockIndex = selectedIndex / VISIBLE_ITEMS;
+        uint8_t newScrollOffset = blockIndex * VISIBLE_ITEMS;
         
-        // Clamp to valid range [0, maxOffset]
-        if (centerOffset < 0) {
-            centerOffset = 0;
-        }
-        
+        // Clamp to valid range
         int16_t maxOffset = static_cast<int16_t>(bankNames.size()) - VISIBLE_ITEMS;
-        if (centerOffset > maxOffset) {
-            centerOffset = maxOffset;
+        if (newScrollOffset > maxOffset) {
+            newScrollOffset = static_cast<uint8_t>(maxOffset);
         }
         
-        scrollOffset = static_cast<uint8_t>(centerOffset);
+        scrollOffset = newScrollOffset;
     }
     
 public:
@@ -123,12 +121,7 @@ public:
             renderer->clearScreen();
             renderer->drawHeader("BANKS");
             
-            // Instruction text: add delete option for USER bank
-            if (loadedIndex == 0) {
-                renderer->drawInstructionText("Select with 1, Delete with 8");
-            } else {
-                renderer->drawInstructionText("Select with 1");
-            }
+            renderer->drawInstructionText("Select with 1");
             
             renderer->drawScrollableList(items, itemCount, 
                                         selectedIndex, loadedIndex, scrollOffset);

@@ -15,20 +15,15 @@ VRC105A Sound Effects - HEAVY RAIN HUGE PROBLEM !!!
 TODOS CORE: 
 Pitch bend (structure existe mais non implémentée)
 Modulation wheel (structure existe mais non implémentée)
-Formes d'onde oscillateur (actuellement sinus uniquement)
-Sauvegarde de presets utilisateur
 Portamento 
 
-
+Pages :
+operator
+Save
+parameters
 
 Traitement par 64 samples ?
 
-Midi input -> notes persistantes quand jouées rapidement
-Boutons
-Encoders
-Ecran
-Logique pages
-Pages provisoires
 
 
 
