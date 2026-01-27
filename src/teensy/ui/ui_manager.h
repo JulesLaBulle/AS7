@@ -10,6 +10,7 @@
 #include "pages/page_pitch_env.h"
 #include "pages/page_bank.h"
 #include "pages/page_preset.h"
+#include "pages/page_parameters.h"
 #include "../hardware/lcd.h"
 #include "../../core/config.h"
 #include "../../core/synth.h"
@@ -20,24 +21,26 @@
 // Handles page navigation, routes hardware events to active page, manages transitions
 //
 // BUTTON MAPPING (16 total):
-//   Button 0  : PREV SUB-PAGE
-//   Button 1  : NEXT SUB-PAGE
-//   Button 2  : OPERATOR 1
-//   Button 3  : OPERATOR 2
-//   Button 4  : OPERATOR 3
-//   Button 5  : OPERATOR 4
-//   Button 6  : OPERATOR 5
-//   Button 7  : OPERATOR 6
-//   Button 8  : ALGORITHM
-//   Button 9  : LFO
-//   Button 10 : PITCH ENVELOPE
-//   Button 11 : BANK
-//   Button 12 : PRESET
-//   Button 13 : SAVE
-//   Button 14 : PARAMETERS
+//   Button 0  : OPERATOR 1
+//   Button 1  : OPERATOR 2
+//   Button 2  : OPERATOR 3
+//   Button 3  : OPERATOR 4
+//   Button 4  : OPERATOR 5
+//   Button 5  : OPERATOR 6
+//   Button 6  : ALGORITHM
+//   Button 7  : LFO
+//   Button 8  : PITCH ENVELOPE
+//   Button 9  : BANK
+//   Button 10 : PRESET
+//   Button 11 : SAVE
+//   Button 12 : PARAMETERS
+//   Button 13-15 : (Reserved for future use)
 //
 // ENCODERS (8 total): Handled by active page according to context
 // ENCODER BUTTONS: Passed to handleButton() with offset (100-107 for encoders 0-7)
+//
+// SUB-PAGE NAVIGATION: For pages with sub-pages (Operator pages), pressing the
+// page button again cycles through sub-pages
 class UIManager {
 public:
     // Offset for encoder buttons to avoid conflict with regular buttons
@@ -114,6 +117,7 @@ public:
         registerPage(PageType::PITCH_ENV, new PagePitchEnv(config, synth, renderer));
         registerPage(PageType::BANK, new PageBank(config, synth, renderer, sysex, userPresets));
         registerPage(PageType::PRESET, new PagePreset(config, synth, renderer, sysex, userPresets));
+        registerPage(PageType::PARAMS, new PageParameters(config, synth, renderer));
         
         navigateTo(PageType::ALGORITHM);
         
@@ -224,19 +228,25 @@ public:
             return;  // Page handled it, no navigation
         }
         
-        // Default navigation behavior
-        if (buttonIndex == 0) {
-            changeSubPage(-1);  // PREV
-            return;
-        } else if (buttonIndex == 1) {
-            changeSubPage(+1);  // NEXT
+        // Direct page navigation (buttons 0-12 map to pages)
+        // Buttons 13+ are ignored (reserved for future use)
+        PageType targetPage = static_cast<PageType>(buttonIndex);
+        
+        // Ignore buttons beyond defined pages
+        if (targetPage >= PageType::COUNT) {
             return;
         }
         
-        if (buttonIndex >= 2 && buttonIndex <= 14) {
-            PageType targetPage = static_cast<PageType>(buttonIndex - 2);
+        // If pressing button for current page, cycle sub-page
+        if (targetPage == currentPageType && currentPage) {
+            currentPage->changeSubPage(+1);
+            #ifdef DEBUG_TEENSY
+            Serial.print(F("UIManager: Cycled to SubPage "));
+            Serial.println(currentPage->getCurrentSubPage());
+            #endif
+        } else {
+            // Navigate to different page
             navigateTo(targetPage);
-            return;
         }
     }
     

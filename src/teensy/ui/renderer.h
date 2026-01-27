@@ -199,6 +199,37 @@ public:
         }
     }
     
+    // Draw widget with custom Y offset (for pages with instruction text)
+    void drawWidget(const WidgetDescriptor& widget, uint16_t yOffset, uint16_t widgetHeight) {
+        if (widget.position >= GRID_TOTAL) return;
+        
+        uint8_t row = getGridRow(widget.position);
+        uint8_t col = getGridCol(widget.position);
+        
+        uint16_t x = col * WIDGET_WIDTH;
+        uint16_t y = yOffset + (row * widgetHeight);
+        uint16_t w = WIDGET_WIDTH * widget.spanCols;
+        uint16_t h = widgetHeight * widget.spanRows;
+        
+        // Draw label (if present)
+        if (widget.label && widget.label[0] != '\0') {
+            tft->setTextColor(COLOR_TEXT);
+            tft->setTextSize(2);
+            tft->setCursor(x + 5, y + 5);
+            tft->print(widget.label);
+        }
+        
+        // Draw value
+        drawWidgetValue(x, y + 30, w, h - 35, widget);
+    }
+    
+    // Draw multiple widgets with custom Y offset and height
+    void drawWidgets(const WidgetDescriptor* widgets, uint8_t count, uint16_t yOffset, uint16_t widgetHeight) {
+        for (uint8_t i = 0; i < count; i++) {
+            drawWidget(widgets[i], yOffset, widgetHeight);
+        }
+    }
+    
     // Update ONLY the value area of a widget (efficient lazy update)
     // Clears and redraws only the variable content, not label/border
     void updateWidgetValue(const WidgetDescriptor& widget) {
@@ -211,6 +242,27 @@ public:
         uint16_t y = CONTENT_Y + (row * WIDGET_HEIGHT);
         uint16_t w = WIDGET_WIDTH * widget.spanCols;
         uint16_t h = WIDGET_HEIGHT * widget.spanRows;
+        
+        // Clear value area (below label at y+30)
+        uint16_t valueY = y + 30;
+        uint16_t valueH = h - 35;
+        tft->fillRect(x + 2, valueY, w - 4, valueH, COLOR_BG);
+        
+        // Redraw value
+        drawWidgetValue(x, valueY, w, valueH, widget);
+    }
+    
+    // Update widget value with custom Y offset and height (for pages with instruction text)
+    void updateWidgetValue(const WidgetDescriptor& widget, uint16_t yOffset, uint16_t widgetHeight) {
+        if (widget.position >= GRID_TOTAL) return;
+        
+        uint8_t row = getGridRow(widget.position);
+        uint8_t col = getGridCol(widget.position);
+        
+        uint16_t x = col * WIDGET_WIDTH;
+        uint16_t y = yOffset + (row * widgetHeight);
+        uint16_t w = WIDGET_WIDTH * widget.spanCols;
+        uint16_t h = widgetHeight * widget.spanRows;
         
         // Clear value area (below label at y+30)
         uint16_t valueY = y + 30;
@@ -450,6 +502,9 @@ public:
     
     // Draw instruction text at top of content area
     void drawInstructionText(const char* text) {
+        // Clear the instruction text area first (full width, from CONTENT_Y to ~CONTENT_Y+30)
+        tft->fillRect(0, CONTENT_Y, SCREEN_WIDTH, 30, COLOR_BG);
+        
         tft->setTextColor(COLOR_TEXT_DIM);
         tft->setTextSize(2);  // Size 2 for better readability
         uint16_t x = (SCREEN_WIDTH - strlen(text) * 12) / 2;  // 12px per char @ size 2
