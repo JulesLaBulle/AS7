@@ -18,8 +18,8 @@ private:
     // Widget descriptors (declarative layout)
     // Algorithm diagram spans 3 cols x 2 rows (positions 1,2,3 and 5,6,7)
     WidgetDescriptor widgets[3] = {
-        WidgetDescriptor("ALGO", WidgetType::LARGE_VALUE, 0, &currentAlgorithm, 1, 32, 1, 1),    // Position 0 (top-left)
-        WidgetDescriptor("FDBK", WidgetType::KNOB, 4, &currentFeedback, 0, 7, 1, 1),      // Position 4 (bottom-left)
+        WidgetDescriptor("Algorithm", WidgetType::LARGE_VALUE, 0, &currentAlgorithm, 1, 32, 1, 1),    // Position 0 (top-left)
+        WidgetDescriptor("Feedback", WidgetType::KNOB, 4, &currentFeedback, 0, 7, 1, 1),      // Position 4 (bottom-left)
         WidgetDescriptor("", WidgetType::ALGORITHM_DIAGRAM, 1, nullptr, 0, 0, 3, 2)       // Spans 3x2 (rest of screen)
     };
     

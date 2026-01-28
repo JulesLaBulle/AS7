@@ -18,7 +18,8 @@ enum class WidgetType : uint8_t {
 
 // Widget descriptor - describes a parameter and its visual representation
 struct WidgetDescriptor {
-    const char* label;      // Parameter label (e.g., "Speed", "Attack", "Coarse")
+    const char* label;      // Parameter label line 1 (e.g., "Speed", "Attack", "Coarse")
+    const char* label2;     // Optional second line (nullptr = single line)
     WidgetType type;        // Widget type
     uint8_t position;       // Grid position (0-7: row0=[0,1,2,3], row1=[4,5,6,7])
     uint8_t spanCols;       // How many columns to span (1-4, default 1)
@@ -27,10 +28,16 @@ struct WidgetDescriptor {
     int16_t minValue;       // Min value (for knobs/selectors)
     int16_t maxValue;       // Max value
     
-    // Constructor for easier initialization
+    // Constructor for easier initialization (single line label)
     WidgetDescriptor(const char* lbl, WidgetType t, uint8_t pos, void* val, 
                      int16_t min = 0, int16_t max = 99, uint8_t colSpan = 1, uint8_t rowSpan = 1)
-        : label(lbl), type(t), position(pos), spanCols(colSpan), spanRows(rowSpan), 
+        : label(lbl), label2(nullptr), type(t), position(pos), spanCols(colSpan), spanRows(rowSpan), 
+          valuePtr(val), minValue(min), maxValue(max) {}
+    
+    // Constructor with two-line label
+    WidgetDescriptor(const char* lbl, const char* lbl2, WidgetType t, uint8_t pos, void* val, 
+                     int16_t min = 0, int16_t max = 99, uint8_t colSpan = 1, uint8_t rowSpan = 1)
+        : label(lbl), label2(lbl2), type(t), position(pos), spanCols(colSpan), spanRows(rowSpan), 
           valuePtr(val), minValue(min), maxValue(max) {}
 };
 

@@ -118,14 +118,14 @@ private:
     // Row 0: R1, R2, R3, R4 (positions 0-3)
     // Row 1: L1, L2, L3, L4 (positions 4-7)
     WidgetDescriptor widgets[8] = {
-        WidgetDescriptor("R1", WidgetType::KNOB, 0, &r1, 0, 99, 1, 1),
-        WidgetDescriptor("R2", WidgetType::KNOB, 1, &r2, 0, 99, 1, 1),
-        WidgetDescriptor("R3", WidgetType::KNOB, 2, &r3, 0, 99, 1, 1),
-        WidgetDescriptor("R4", WidgetType::KNOB, 3, &r4, 0, 99, 1, 1),
-        WidgetDescriptor("L1", WidgetType::KNOB, 4, &l1, 0, 99, 1, 1),
-        WidgetDescriptor("L2", WidgetType::KNOB, 5, &l2, 0, 99, 1, 1),
-        WidgetDescriptor("L3", WidgetType::KNOB, 6, &l3, 0, 99, 1, 1),
-        WidgetDescriptor("L4", WidgetType::KNOB, 7, &l4, 0, 99, 1, 1)
+        WidgetDescriptor("Rate 1", WidgetType::KNOB, 0, &r1, 0, 99, 1, 1),
+        WidgetDescriptor("Rate 2", WidgetType::KNOB, 1, &r2, 0, 99, 1, 1),
+        WidgetDescriptor("Rate 3", WidgetType::KNOB, 2, &r3, 0, 99, 1, 1),
+        WidgetDescriptor("Rate 4", WidgetType::KNOB, 3, &r4, 0, 99, 1, 1),
+        WidgetDescriptor("Level 1", WidgetType::KNOB, 4, &l1, 0, 99, 1, 1),
+        WidgetDescriptor("Level 2", WidgetType::KNOB, 5, &l2, 0, 99, 1, 1),
+        WidgetDescriptor("Level 3", WidgetType::KNOB, 6, &l3, 0, 99, 1, 1),
+        WidgetDescriptor("Level 4", WidgetType::KNOB, 7, &l4, 0, 99, 1, 1)
     };
 };
 

@@ -120,12 +120,12 @@ private:
     WidgetDescriptor widgets[8] = {
         WidgetDescriptor("Speed", WidgetType::KNOB, 0, &speed, 0, 99, 1, 1),
         WidgetDescriptor("Delay", WidgetType::KNOB, 1, &delay, 0, 99, 1, 1),
-        WidgetDescriptor("PMD", WidgetType::KNOB, 2, &pmd, 0, 99, 1, 1),
-        WidgetDescriptor("AMD", WidgetType::KNOB, 3, &amd, 0, 99, 1, 1),
-        WidgetDescriptor("PModSns", WidgetType::KNOB, 4, &pms, 0, 7, 1, 1),
-        WidgetDescriptor("LFOKSync", WidgetType::TOGGLE, 5, &lfoKeySync, 0, 1, 1, 1),
-        WidgetDescriptor("OSCKSync", WidgetType::TOGGLE, 6, &oscKeySync, 0, 1, 1, 1),
-        WidgetDescriptor("Wave", WidgetType::KNOB, 7, &waveform, 0, 5, 1, 1)  // For now: knob (later: waveform preview)
+        WidgetDescriptor("Pitch Mod", "Depth", WidgetType::KNOB, 2, &pmd, 0, 99, 1, 1),
+        WidgetDescriptor("Amp Mod", "Depth", WidgetType::KNOB, 3, &amd, 0, 99, 1, 1),
+        WidgetDescriptor("Pitch Mod", "Sens", WidgetType::KNOB, 4, &pms, 0, 7, 1, 1),
+        WidgetDescriptor("LFO", "Key Sync", WidgetType::TOGGLE, 5, &lfoKeySync, 0, 1, 1, 1),
+        WidgetDescriptor("OSC", "Key Sync", WidgetType::TOGGLE, 6, &oscKeySync, 0, 1, 1, 1),
+        WidgetDescriptor("Waveform", WidgetType::KNOB, 7, &waveform, 0, 5, 1, 1)  // For now: knob (later: waveform preview)
     };
 };
 

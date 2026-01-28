@@ -180,12 +180,29 @@ public:
         uint16_t w = WIDGET_WIDTH * widget.spanCols;
         uint16_t h = WIDGET_HEIGHT * widget.spanRows;
         
-        // Draw label (if present)
+        // Draw label (if present) - centered, with optional second line
         if (widget.label && widget.label[0] != '\0') {
             tft->setTextColor(COLOR_TEXT);
             tft->setTextSize(2);
-            tft->setCursor(x + 5, y + 5);
-            tft->print(widget.label);
+            
+            // Calculate text width for centering (approximate: 6px per char for size 2)
+            uint16_t textWidth1 = strlen(widget.label) * 12;
+            uint16_t xCentered1 = x + (w - textWidth1) / 2;
+            
+            if (widget.label2 && widget.label2[0] != '\0') {
+                // Two-line label
+                tft->setCursor(xCentered1, y + 2);
+                tft->print(widget.label);
+                
+                uint16_t textWidth2 = strlen(widget.label2) * 12;
+                uint16_t xCentered2 = x + (w - textWidth2) / 2;
+                tft->setCursor(xCentered2, y + 20);
+                tft->print(widget.label2);
+            } else {
+                // Single-line label
+                tft->setCursor(xCentered1, y + 5);
+                tft->print(widget.label);
+            }
         }
         
         // Draw value
@@ -211,12 +228,29 @@ public:
         uint16_t w = WIDGET_WIDTH * widget.spanCols;
         uint16_t h = widgetHeight * widget.spanRows;
         
-        // Draw label (if present)
+        // Draw label (if present) - centered, with optional second line
         if (widget.label && widget.label[0] != '\0') {
             tft->setTextColor(COLOR_TEXT);
             tft->setTextSize(2);
-            tft->setCursor(x + 5, y + 5);
-            tft->print(widget.label);
+            
+            // Calculate text width for centering (approximate: 6px per char for size 2)
+            uint16_t textWidth1 = strlen(widget.label) * 12;
+            uint16_t xCentered1 = x + (w - textWidth1) / 2;
+            
+            if (widget.label2 && widget.label2[0] != '\0') {
+                // Two-line label
+                tft->setCursor(xCentered1, y + 2);
+                tft->print(widget.label);
+                
+                uint16_t textWidth2 = strlen(widget.label2) * 12;
+                uint16_t xCentered2 = x + (w - textWidth2) / 2;
+                tft->setCursor(xCentered2, y + 20);
+                tft->print(widget.label2);
+            } else {
+                // Single-line label
+                tft->setCursor(xCentered1, y + 5);
+                tft->print(widget.label);
+            }
         }
         
         // Draw value

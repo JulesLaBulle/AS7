@@ -5,6 +5,7 @@
 #include <array>
 #include "page.h"
 #include "renderer.h"
+#include "pages/page_operator.h"
 #include "pages/page_algorithm.h"
 #include "pages/page_lfo.h"
 #include "pages/page_pitch_env.h"
@@ -112,6 +113,12 @@ public:
         userPresets->loadUserBank();
         
         // Register pages
+        registerPage(PageType::OPERATOR_1, new PageOperator(config, synth, renderer, 0));
+        registerPage(PageType::OPERATOR_2, new PageOperator(config, synth, renderer, 1));
+        registerPage(PageType::OPERATOR_3, new PageOperator(config, synth, renderer, 2));
+        registerPage(PageType::OPERATOR_4, new PageOperator(config, synth, renderer, 3));
+        registerPage(PageType::OPERATOR_5, new PageOperator(config, synth, renderer, 4));
+        registerPage(PageType::OPERATOR_6, new PageOperator(config, synth, renderer, 5));
         registerPage(PageType::ALGORITHM, new PageAlgorithm(config, synth, renderer));
         registerPage(PageType::LFO, new PageLFO(config, synth, renderer));
         registerPage(PageType::PITCH_ENV, new PagePitchEnv(config, synth, renderer));
